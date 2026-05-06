@@ -1,0 +1,5 @@
+mode,tokens,savings_pct
+direct,160143,0
+proxy_startup,456,99.7
+proxy_after_search,505,99.7
+proxy_after_schema,2119,98.7

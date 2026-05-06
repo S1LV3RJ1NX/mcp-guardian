@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import argparse
 
+from dotenv import load_dotenv
+
 from mcp_guardian.settings import get_settings
+
+load_dotenv()
 
 
 def main() -> None:
