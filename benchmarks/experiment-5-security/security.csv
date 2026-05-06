@@ -1,0 +1,10 @@
+server,tool,search_hidden,schema_blocked,execute_blocked,all_pass
+github,delete_file,True,True,True,True
+github,fork_repository,True,True,True,True
+github,push_files,True,True,True,True
+github,create_repository,True,True,True,True
+postgres,pg_drop_table,True,True,True,True
+postgres,pg_truncate,True,True,True,True
+postgres,pg_write_query,True,True,True,True
+postgres,pg_vacuum,True,True,True,True
+postgres,pg_terminate_backend,True,True,True,True
