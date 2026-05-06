@@ -1,0 +1,22 @@
+[
+  { "query": "open bugs", "expected": ["list_issues"] },
+  { "query": "find pull request", "expected": ["list_pull_requests", "get_pull_request"] },
+  { "query": "issue details", "expected": ["get_issue"] },
+  { "query": "merge PR", "expected": ["merge_pull_request"] },
+  { "query": "list tables", "expected": ["pg_list_tables"] },
+  { "query": "list tables", "expected": ["pg_list_tables"] },
+  { "query": "table structure", "expected": ["pg_describe_table"] },
+  { "query": "run query", "expected": ["pg_read_query"] },
+  { "query": "insert data", "expected": ["pg_write_query", "pg_upsert"] },
+  { "query": "database performance", "expected": ["pg_diagnose_database_performance"] },
+  { "query": "issues in repo", "expected": ["list_issues"] },
+  { "query": "PR status", "expected": ["get_pull_request"] },
+  { "query": "create bug report", "expected": ["create_issue"] },
+  { "query": "new PR", "expected": ["create_pull_request"] },
+  { "query": "release", "expected": ["create_release"] },
+  { "query": "team member", "expected": ["add_collaborator"] },
+  { "query": "vacuum tables", "expected": ["pg_vacuum", "pg_vacuum_analyze"] },
+  { "query": "full text search", "expected": ["pg_text_search"] },
+  { "query": "repository issues", "expected": ["list_issues"] },
+  { "query": "pull requests ready to merge", "expected": ["list_pull_requests"] }
+]

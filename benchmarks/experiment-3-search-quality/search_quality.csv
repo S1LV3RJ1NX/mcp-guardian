@@ -1,0 +1,2 @@
+scope,total_queries,applicable,scope_blocked,hit_rate_pct,precision_at_1_pct,precision_at_3_pct
+current,20,9,11,88.9,88.9,88.9
