@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from mcp_guardian.exceptions import ConfigError
+
+load_dotenv()
 
 
 class GuardianSettings(BaseSettings):
@@ -14,7 +17,8 @@ class GuardianSettings(BaseSettings):
 
     Loaded from .env file and/or environment variables.
     All env vars are prefixed with GUARDIAN_ (except auth tokens
-    which are referenced by name in scope.yaml).
+    which are referenced by name in scope.yaml — those are loaded
+    into os.environ via load_dotenv() above).
     """
 
     model_config = SettingsConfigDict(

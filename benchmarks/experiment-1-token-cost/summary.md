@@ -38,13 +38,13 @@ Even after a full search-then-drill-down workflow (search + get_schema for one t
 
 ## Why It Matters
 
-At GPT-4o input pricing ($2.50 / 1M tokens):
+At Claude Opus 4.6 input pricing ($5.00 / 1M tokens):
 
 | Mode | Cost per session | Annual cost (1000 sessions/day) |
 |------|----------------:|-----------:|
-| Direct | $0.000400 | $146.13 |
-| Proxy startup | $0.000001 | $0.42 |
-| Savings | $0.000399 | **$145.71/yr** |
+| Direct | $0.000801 | $292.27 |
+| Proxy startup | $0.000002 | $0.83 |
+| Savings | $0.000799 | **$291.44/yr** |
 
 The token savings translate directly to lower latency (fewer tokens to process in the context window) and reduced cost at scale.
 
