@@ -34,9 +34,13 @@ def _get_encoder() -> Any:
 
 
 def _approx_tokens(text: str) -> int:
-    """Approximate token count: ~0.75 tokens per word."""
-    words = len(text.split())
-    return max(1, int(words * 0.75))
+    """Approximate token count: ~1 token per 4 characters.
+
+    For JSON-heavy content (tool schemas), character-based estimation
+    is more reliable than word-based since JSON has many punctuation
+    tokens (braces, colons, quotes).
+    """
+    return max(1, len(text) // 4)
 
 
 META_TOOL_SCHEMAS = [
