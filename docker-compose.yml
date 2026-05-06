@@ -1,0 +1,25 @@
+services:
+  postgres-mcp:
+    image: writenotenow/postgres-mcp:latest
+    ports:
+      - "3000:3000"
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL:-postgresql://postgres:password@host.docker.internal:5432/mydb}
+    command: ["--transport", "http", "--port", "3000"]
+
+  guardian:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      GUARDIAN_SCOPE: ${GUARDIAN_SCOPE:-support-agent}
+      GUARDIAN_CONFIG_PATH: scope.yaml
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      # In compose, postgres-mcp is reachable via service name
+      POSTGRES_MCP_URL: http://postgres-mcp:3000/mcp
+    volumes:
+      - ./examples/scope.direct.yaml:/app/scope.yaml
+    depends_on:
+      - postgres-mcp
