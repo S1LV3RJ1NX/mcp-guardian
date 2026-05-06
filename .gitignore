@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+dist/
+*.egg-info/
+.ruff_cache/
+audit.log
+scope.yaml
+.env
+.coverage
+htmlcov/

@@ -1,0 +1,61 @@
+# examples/scope.direct.yaml — Direct connections, PAT-based auth
+# Usage: cp examples/scope.direct.yaml scope.yaml
+
+upstream_servers:
+  github:
+    url: https://api.githubcopilot.com/mcp/
+    transport: auto
+    auth:
+      type: bearer_env
+      value_env: GITHUB_TOKEN           # GitHub PAT from env
+
+  postgres:
+    url_env: POSTGRES_MCP_URL           # Full URL from env (has credentials)
+    transport: auto
+    auth:
+      type: none
+
+scopes:
+  support-agent:
+    description: "Read-only tools for support agents"
+    servers:
+      github:
+        allowed_tools:
+          - get_me
+          - list_issues
+          - issue_read
+          - list_pull_requests
+          - pull_request_read
+          - search_issues
+          - search_code
+      postgres:
+        allowed_tools:
+          - pg_read_query
+          - pg_list_tables
+          - pg_describe_table
+          - pg_count
+          - pg_exists
+          - pg_explain
+          - pg_table_stats
+
+  developer:
+    description: "Full access minus destructive operations"
+    servers:
+      github:
+        allowed_tools: "*"
+        blocked_tools:
+          - delete_file
+          - fork_repository
+          - push_files
+      postgres:
+        allowed_tools: "*"
+        blocked_tools:
+          - pg_drop_table
+          - pg_drop_index
+          - pg_truncate
+          - pg_terminate_backend
+
+audit:
+  enabled: true
+  log_file: audit.log
+  include_params: true
