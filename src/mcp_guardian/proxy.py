@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -34,6 +35,7 @@ class Guardian:
         self.upstream = UpstreamManager(self.config.upstream_servers)
         self.index = ToolIndex()
         self.audit = AuditLogger(self.config.audit)
+        self._indexing_in_progress = False
         self.server = FastMCP(
             f"mcp-guardian ({scope})",
             instructions=(
@@ -56,10 +58,23 @@ class Guardian:
             Args:
                 query: Search keywords (e.g., 'github issues', 'query database', 'list tables')
             """
+            self._try_index_deferred()
             results = self.index.search(query)
-            if not results:
+            output: list[dict[str, Any]] = [
+                {"name": r.name, "server": r.server, "brief": r.brief} for r in results
+            ]
+            if self.index._deferred_servers:
+                output.append(
+                    {
+                        "notice": (
+                            f"Servers pending OAuth: {', '.join(self.index._deferred_servers)}. "
+                            "Complete the OAuth flow in the browser, then search again."
+                        ),
+                    }
+                )
+            if not results and not self.index._deferred_servers:
                 return [{"message": f"No tools matching '{query}'. Try different keywords."}]
-            return [{"name": r.name, "server": r.server, "brief": r.brief} for r in results]
+            return output
 
         @self.server.tool()
         async def get_schema(tool_name: str) -> dict[str, Any]:
@@ -71,6 +86,7 @@ class Guardian:
             Args:
                 tool_name: Exact tool name from search_tools results.
             """
+            self._try_index_deferred()
             schema = self.index.get_schema(tool_name)
             if schema is None:
                 return {
@@ -158,6 +174,33 @@ class Guardian:
                 )
                 return {"error": error_str, "code": "UPSTREAM_ERROR"}
 
+    def _try_index_deferred(self) -> None:
+        """Kick off deferred indexing in the background (non-blocking).
+
+        OAuth servers require browser interaction, so we can't block
+        the current request. A background task handles the flow and
+        subsequent calls will see the newly indexed tools.
+        """
+        if self.index._deferred_servers and not self._indexing_in_progress:
+            self._indexing_in_progress = True
+            asyncio.create_task(self._do_index_deferred())
+
+    async def _do_index_deferred(self) -> None:
+        """Background coroutine that runs the deferred indexing."""
+        try:
+            indexed = await self.index.index_deferred(self.config, self.upstream)
+            if indexed:
+                logger.info("Indexed deferred servers: %s", ", ".join(indexed))
+                report = savings_report(self.index)
+                print(  # noqa: T201
+                    f"  OAuth servers indexed: {', '.join(indexed)} "
+                    f"({report['tools_in_scope']} tools now in scope)"
+                )
+        except Exception:
+            logger.exception("Deferred indexing failed")
+        finally:
+            self._indexing_in_progress = False
+
     def _get_client_headers(self) -> dict[str, str]:
         """Extract the current client's request headers.
 
@@ -198,6 +241,8 @@ class Guardian:
         logger.info("  Proxy cost:     %s tokens", f"{report['proxy_tokens']:,}")
         logger.info("  Savings:        %.1f%%", report["savings_pct"])
 
+        deferred = self.index._deferred_servers
+
         print("mcp-guardian started")  # noqa: T201
         print(f"  Scope:          {self.config.active_scope}")  # noqa: T201
         print(f"  Servers:        {len(self.config.upstream_servers)}")  # noqa: T201
@@ -205,6 +250,8 @@ class Guardian:
         print(f"  Direct cost:    {report['direct_tokens']:,} tokens")  # noqa: T201
         print(f"  Proxy cost:     {report['proxy_tokens']:,} tokens")  # noqa: T201
         print(f"  Savings:        {report['savings_pct']:.1f}%")  # noqa: T201
+        if deferred:
+            print(f"  Deferred:       {', '.join(deferred)} (will index on first call)")  # noqa: T201
 
     def run(self, **kwargs: Any) -> None:
         """Run the proxy server."""

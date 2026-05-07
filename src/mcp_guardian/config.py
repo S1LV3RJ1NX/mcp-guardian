@@ -9,7 +9,7 @@ import yaml
 
 from mcp_guardian.exceptions import ConfigError
 
-VALID_AUTH_TYPES = frozenset({"none", "static_header", "bearer_env", "token_passthrough"})
+VALID_AUTH_TYPES = frozenset({"none", "static_header", "bearer_env", "token_passthrough", "oauth"})
 VALID_TRANSPORTS = frozenset({"auto", "streamable-http", "sse"})
 
 

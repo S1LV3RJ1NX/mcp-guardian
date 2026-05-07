@@ -62,6 +62,7 @@ class ToolIndex:
         self.tokens_saved: int = 0
         self._excluded_count: int = 0
         self._search: SearchStrategy = search_strategy or KeywordSearch()
+        self._deferred_servers: list[str] = []
 
     async def build(self, config: GuardianConfig, upstream: UpstreamManager) -> None:
         """Probe upstream servers, filter by scope, build the index.
@@ -73,7 +74,17 @@ class ToolIndex:
         scope = config.scopes[config.active_scope]
 
         for server_name, scope_server in scope.servers.items():
-            tools = await upstream.list_tools(server_name)
+            try:
+                tools = await upstream.list_tools(server_name, interactive=False)
+            except Exception as exc:
+                logger.warning(
+                    "Server '%s': skipped at startup (%s). "
+                    "Tools will be indexed on first authenticated call.",
+                    server_name,
+                    exc,
+                )
+                self._deferred_servers.append(server_name)
+                continue
             logger.info(
                 "Server '%s': %d tools upstream, filtering by scope",
                 server_name,
@@ -107,6 +118,56 @@ class ToolIndex:
                 included,
                 len(tools) - included,
             )
+
+    async def index_deferred(self, config: GuardianConfig, upstream: UpstreamManager) -> list[str]:
+        """Try to index servers that were deferred at startup (e.g. OAuth).
+
+        Returns:
+            List of server names that were successfully indexed.
+        """
+        if not self._deferred_servers:
+            return []
+
+        scope = config.scopes[config.active_scope]
+        indexed: list[str] = []
+
+        for server_name in list(self._deferred_servers):
+            scope_server = scope.servers.get(server_name)
+            if scope_server is None:
+                continue
+            try:
+                tools = await upstream.list_tools(server_name)
+            except Exception:
+                continue
+
+            allowed = scope_server.allowed_tools
+            blocked = set(scope_server.blocked_tools)
+
+            for tool in tools:
+                schema = tool.model_dump()
+                tokens = count_schema_tokens(schema)
+                if _is_tool_allowed(tool.name, allowed, blocked):
+                    self.entries[tool.name] = ToolEntry(
+                        name=tool.name,
+                        server=server_name,
+                        description=tool.description or "",
+                        brief=_make_brief(tool.description or ""),
+                        full_schema=schema,
+                        token_cost=tokens,
+                    )
+                else:
+                    self.tokens_saved += tokens
+                    self._excluded_count += 1
+
+            self._deferred_servers.remove(server_name)
+            indexed.append(server_name)
+            logger.info(
+                "Server '%s': deferred indexing complete (%d tools)",
+                server_name,
+                len(tools),
+            )
+
+        return indexed
 
     def search(self, query: str) -> list[SearchResult]:
         """Search indexed tools by query.

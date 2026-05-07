@@ -50,7 +50,10 @@ def get_auth_headers(
                     return {"Authorization": client_headers[key]}
         return {}
 
+    if auth.type == "oauth":
+        return {}
+
     raise ConfigError(
         f"Unknown auth type: '{auth.type}'. "
-        f"Supported: none, static_header, bearer_env, token_passthrough"
+        f"Supported: none, static_header, bearer_env, token_passthrough, oauth"
     )

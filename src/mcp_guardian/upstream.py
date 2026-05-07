@@ -27,12 +27,26 @@ class UpstreamManager:
     def __init__(self, servers: dict[str, ServerConfig]) -> None:
         self._servers = servers
 
-    def _resolve_auth(self, server: ServerConfig) -> str | None:
-        """Resolve the auth token for a server, if applicable."""
+    def _resolve_auth(self, server: ServerConfig, *, interactive: bool = True) -> str | None:
+        """Resolve the auth credential for a server.
+
+        Returns a bearer token string, the literal ``"oauth"`` (which
+        fastmcp interprets as "run the browser-based OAuth flow"), or
+        None for servers that need no auth.
+
+        Args:
+            server: Server configuration.
+            interactive: When False, OAuth servers return None so the
+                call fails fast with 401 instead of blocking on a
+                browser flow. Used during startup to defer OAuth
+                servers gracefully.
+        """
         if server.auth.type == "bearer_env" and server.auth.value_env:
             from mcp_guardian.settings import get_env_var
 
             return get_env_var(server.auth.value_env)
+        if server.auth.type == "oauth":
+            return "oauth" if interactive else None
         return None
 
     def _get_server(self, name: str) -> ServerConfig:
@@ -42,11 +56,12 @@ class UpstreamManager:
             raise UpstreamError(f"Unknown server '{name}'. Available servers: {available}")
         return self._servers[name]
 
-    async def list_tools(self, name: str) -> list[Tool]:
+    async def list_tools(self, name: str, *, interactive: bool = True) -> list[Tool]:
         """Connect to a server, list its tools, and disconnect.
 
         Args:
             name: Server name as defined in upstream_servers config.
+            interactive: If False, skip OAuth browser flow and fail fast.
 
         Returns:
             List of MCP Tool objects from the server.
@@ -58,7 +73,7 @@ class UpstreamManager:
 
         server = self._get_server(name)
         url = server.get_url()
-        auth = self._resolve_auth(server)
+        auth = self._resolve_auth(server, interactive=interactive)
 
         try:
             async with Client(url, auth=auth) as client:

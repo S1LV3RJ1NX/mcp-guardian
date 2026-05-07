@@ -9,6 +9,9 @@ from mcp_guardian.settings import get_settings
 
 def main() -> None:
     """Parse CLI arguments and start the proxy server."""
+    from mcp_guardian.patches import apply_patches
+
+    apply_patches()
     parser = argparse.ArgumentParser(
         description="mcp-guardian: MCP proxy for tool scoping and progressive discovery",
     )
