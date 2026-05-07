@@ -12,7 +12,8 @@ How mcp-guardian compares to other approaches for managing MCP tool sprawl.
 | Token cost | All schemas upfront (160K+ tokens) | 3 meta-tool schemas (456 tokens) |
 | Tool scoping | None — client sees everything | Per-scope allowlist/blocklist |
 | Audit logging | None | JSONL audit trail |
-| Auth management | Per-client | Centralized in proxy |
+| Auth management | Per-client | Centralized in proxy (env, dashboard, or OAuth) |
+| Credential UX | Distribute tokens to each client | Web dashboard for OAuth connect + API key entry |
 | Latency overhead | None | Negligible (-8ms in benchmarks) |
 
 **When direct is fine:**
@@ -24,7 +25,7 @@ How mcp-guardian compares to other approaches for managing MCP tool sprawl.
 - Multiple servers with 39+ tools combined
 - Need role-based tool access (support agent vs developer)
 - Need audit trail for compliance
-- Need centralized auth (one PAT, not per-client)
+- Need centralized auth — manage OAuth sessions and API keys from a web dashboard instead of distributing tokens per client
 
 ## vs FastMCP Code Mode
 
@@ -65,3 +66,4 @@ mcp-guardian implements this recommendation at the infrastructure layer instead 
 | Works with closed-source clients | No | Yes |
 | Consistent across clients | No (each implements differently) | Yes (one proxy, one behavior) |
 | Scoping | Client must implement | Proxy handles it |
+| OAuth / credential management | Client must implement per-server | Proxy manages sessions centrally, dashboard for interactive auth |

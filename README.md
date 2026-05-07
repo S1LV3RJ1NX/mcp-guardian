@@ -38,13 +38,16 @@ uv sync --dev
 # 2. Configure
 cp examples/scope.direct.yaml scope.yaml
 cp .env.example .env
-# Edit .env with your POSTGRES_MCP_URL and GITHUB_TOKEN
+# Edit .env with your POSTGRES_MCP_URL (and optionally GITHUB_OAUTH_SECRET, TRENDS_API_KEY)
 
 # 3. Run
 uv run mcp-guardian --scope support-agent
 
-# 4. Test — connect any MCP client to http://localhost:9000/mcp
+# 4. Open the dashboard at http://localhost:9000/
+#    Connect MCP clients to http://localhost:9000/mcp
 ```
+
+The proxy serves a **web dashboard** at the root URL for managing server connections, browsing tools, entering API keys, and triggering OAuth flows.
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) for a detailed walkthrough.
 
@@ -54,43 +57,59 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for a detailed walkthrough.
 
 ```yaml
 upstream_servers:
-  postgres:
-    url_env: POSTGRES_MCP_URL       # URL from env var
-    auth:
-      type: none
-
   github:
     url: https://api.githubcopilot.com/mcp/
     auth:
+      type: oauth
+      client_id: Iv23li...                # pre-registered OAuth app
+      client_secret_env: GITHUB_OAUTH_SECRET
+
+  postgres:
+    url_env: POSTGRES_MCP_URL             # URL from env var
+    auth:
+      type: none
+
+  trends:
+    url: https://x-twitter.api.trendsmcp.ai/mcp
+    auth:
       type: bearer_env
-      value_env: GITHUB_TOKEN       # PAT from env var
+      value_env: TRENDS_API_KEY           # or enter via dashboard
 
 scopes:
-  support-agent:                    # Read-only scope
+  support-agent:                          # Read-only scope
     servers:
+      github:
+        allowed_tools:
+          - get_me
+          - list_issues
+          - search_issues
       postgres:
         allowed_tools:
           - pg_read_query
           - pg_list_tables
           - pg_describe_table
-      github:
+      trends:
         allowed_tools:
-          - list_issues
-          - search_issues
+          - trendsMCP___get_top_trends
 
-  developer:                        # Broad scope with blocklist
+  developer:                              # Broad scope with blocklist
     servers:
+      github:
+        allowed_tools: "*"
+        blocked_tools: [delete_file, push_files]
       postgres:
         allowed_tools: "*"
-        blocked_tools:
-          - pg_drop_table
-          - pg_truncate
+        blocked_tools: [pg_drop_table, pg_truncate]
+      trends:
+        allowed_tools: "*"
 
 audit:
   enabled: true
   log_file: audit.log
   include_params: true
 ```
+
+See [docs/WRITING_SCOPE_YAML.md](docs/WRITING_SCOPE_YAML.md) for the full reference.
 
 ### Environment Variables
 
@@ -102,16 +121,17 @@ audit:
 | `GUARDIAN_SCOPE` | (required) | Active scope name |
 | `GUARDIAN_LOG_LEVEL` | `INFO` | Log level |
 
-Auth tokens (`GITHUB_TOKEN`, `POSTGRES_MCP_URL`, etc.) are referenced by name in `scope.yaml` and read from `.env` or the environment.
+Auth tokens are referenced by name in `scope.yaml` and resolved from `.env`, the dashboard, or client headers.
 
 ### Auth Types
 
 | Type | Description |
 |------|-------------|
 | `none` | No authentication |
-| `bearer_env` | Bearer token from env var (`value_env: GITHUB_TOKEN`) |
-| `static_header` | Custom header from env var (`header_name`, `value_env`) |
+| `bearer_env` | Bearer token resolved from: client header > dashboard KeyStore > env var (`value_env`) |
+| `static_header` | Custom header from env var (`header`, `value_env`) |
 | `token_passthrough` | Forward client's Authorization header to upstream |
+| `oauth` | Browser-based OAuth flow. Optional `client_id` / `client_secret_env` for pre-registered apps |
 
 ## Benchmark Results
 
@@ -167,6 +187,8 @@ See [docs/COMPARISON.md](docs/COMPARISON.md) for a detailed comparison.
 - **URL paths:** Most MCP servers serve at `/mcp` (e.g., `http://localhost:3000/mcp`). Don't forget the path suffix.
 - **Transport:** The proxy defaults to `streamable-http`. Use `--transport sse` or `--transport stdio` if your client requires it.
 - **tiktoken:** Token counting uses tiktoken which downloads encoding data on first use. In air-gapped environments it falls back to a character-based approximation.
+- **OAuth tokens are in-memory:** OAuth sessions are lost on restart. The dashboard shows "Pending OAuth" and you click Connect again. API keys entered via dashboard are restored from browser localStorage automatically.
+- **Graceful shutdown:** Press `Ctrl+C` to stop the proxy. It cleanly closes all OAuth client sessions before exiting.
 
 ## Development
 

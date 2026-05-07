@@ -8,17 +8,18 @@ A proxy sits transparently between any MCP client and any upstream server. The c
 
 A client library would require every client to integrate it, and wouldn't work with closed-source clients.
 
-## Why Per-Call Connections
+## Connection Strategy
 
-The `UpstreamManager` opens a fresh `fastmcp.Client` connection for each `call_tool` invocation rather than maintaining a persistent connection pool.
+The `UpstreamManager` uses two strategies depending on auth type:
 
-Reasons:
+**Non-OAuth servers** (`none`, `bearer_env`, `static_header`, `token_passthrough`) open a fresh `fastmcp.Client` connection per `call_tool` invocation. Reasons:
 - **Simplicity** — no connection lifecycle management, reconnection logic, or stale connection bugs
 - **Statelessness** — each call is independent, which makes the proxy horizontally scalable
 - **Auth freshness** — tokens are resolved at call time, so rotated credentials work immediately
-- **MCP transport compatibility** — some transports (stdio) don't support multiplexing
 
-The overhead of reconnecting is negligible compared to the upstream call latency (typically 50-5000ms).
+**OAuth servers** use **persistent cached clients** (`_oauth_clients` dict). The OAuth flow requires a browser-based authorization and token exchange; creating a fresh client each time would repeat the flow. The cached client preserves the token for the session. `disconnect_oauth()` and `shutdown()` clean up these clients.
+
+The overhead of reconnecting (for non-OAuth) is negligible compared to the upstream call latency (typically 50-5000ms).
 
 ## Why YAML Config + Pydantic Settings
 
@@ -28,7 +29,7 @@ Two configuration layers serve different purposes:
 
 **Environment variables** (via Pydantic Settings with `GUARDIAN_` prefix) handle runtime config — host, port, transport, log level. These change per deployment without touching the config file.
 
-Auth tokens (`GITHUB_TOKEN`, etc.) are referenced by name in scope.yaml but read from the environment, keeping secrets out of config files.
+Auth tokens are referenced by name in scope.yaml but read from the environment, the dashboard's KeyStore, or client headers — keeping secrets out of config files.
 
 ## Why Keyword Search as Default
 
@@ -71,16 +72,29 @@ Client                    Proxy                         Upstream
 
 Only `execute_tool` hits the upstream server. Search and schema lookups are served from the in-memory index built at startup.
 
+## Web Dashboard
+
+The proxy serves a web dashboard at `http://<host>:<port>/` with API endpoints under `/api/*`. The dashboard provides:
+
+- **Server cards** — status of each upstream server (connected, pending OAuth, needs API key)
+- **Tool browser** — expand any connected server to see its indexed tools
+- **OAuth connect** — click to trigger browser-based OAuth for deferred servers
+- **API key input** — paste API keys for `bearer_env` servers, persisted in browser localStorage
+- **Search** — search across all indexed tools
+- **Stats** — tools in scope, token savings, server count
+
+The dashboard is a single HTML file (`dashboard.html`) served via custom Starlette routes in `routes.py`.
+
 ## Module Structure
 
 ```
 src/mcp_guardian/
-  cli.py          # argparse entry point
+  cli.py          # argparse entry point, graceful shutdown
   settings.py     # Pydantic Settings + load_dotenv
   config.py       # YAML parsing, dataclasses, validation
   exceptions.py   # GuardianError hierarchy
-  upstream.py     # UpstreamManager (per-call connections)
-  index.py        # ToolIndex (scope filtering, search)
+  upstream.py     # UpstreamManager (connections, OAuth client cache)
+  index.py        # ToolIndex (scope filtering, search, deferred indexing)
   search/
     base.py       # SearchStrategy ABC
     keyword.py    # KeywordSearch implementation
@@ -88,4 +102,8 @@ src/mcp_guardian/
   audit.py        # JSONL audit logger
   tokens.py       # tiktoken counting + meta-tool schemas
   proxy.py        # Guardian class (FastMCP server + 3 meta-tools)
+  routes.py       # Dashboard HTTP API + static page serving
+  keystore.py     # KeyStore ABC + InMemoryKeyStore for API keys
+  patches.py      # OAuth compatibility patches (2xx, form-encoded)
+  dashboard.html  # Embedded web dashboard (single-file HTML/CSS/JS)
 ```

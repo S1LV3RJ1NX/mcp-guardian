@@ -58,11 +58,15 @@ The spec's recommendation is good but means Claude Desktop, Cursor, and your cus
 
 ## 4. Code Walkthrough — How It's Built
 
-The whole system is ~600 lines of Python in `src/mcp_guardian/`. Here's what each file does and how they fit together.
+The system lives in `src/mcp_guardian/` (~2400 lines including the HTML dashboard). Here's what each file does and how they fit together.
 
 ### Entry point: `cli.py` → `proxy.py`
 
-`uv run mcp-guardian --scope support-agent` calls [src/mcp_guardian/cli.py](../src/mcp_guardian/cli.py) which parses args, loads settings, then instantiates `Guardian` from [src/mcp_guardian/proxy.py](../src/mcp_guardian/proxy.py) and calls `guardian.run()`.
+`uv run mcp-guardian --scope support-agent` calls [src/mcp_guardian/cli.py](../src/mcp_guardian/cli.py) which:
+1. Calls `apply_patches()` from `patches.py` to fix OAuth compatibility issues at startup
+2. Parses CLI args and loads settings
+3. Instantiates `Guardian` from [src/mcp_guardian/proxy.py](../src/mcp_guardian/proxy.py)
+4. Calls `guardian.run()` inside a `try/finally` that cleanly shuts down OAuth clients on `Ctrl+C`
 
 ### `proxy.py` — the Guardian class
 
@@ -76,7 +80,10 @@ def __init__(self, config_path: str, scope: str) -> None:
     self.audit = AuditLogger(self.config.audit)
     self.server = FastMCP(...)
     self._register_meta_tools()
+    self._register_dashboard()  # web UI + API routes
 ```
+
+`_register_dashboard()` adds the web dashboard at `/` and API endpoints under `/api/*` (server cards, tool browser, OAuth connect, API key management).
 
 The `_register_meta_tools` method registers the 3 tools with FastMCP. Here's `execute_tool` — the most important one:
 
@@ -109,14 +116,20 @@ Defines dataclasses for the config structure. Key types:
 
 ### `upstream.py` — connection manager
 
-`UpstreamManager.list_tools(name)` and `call_tool(...)` open a fresh `fastmcp.Client` connection per call:
+`UpstreamManager` handles two connection strategies:
+
+**Non-OAuth servers** — fresh `fastmcp.Client` per call:
 
 ```python
 async with Client(url, auth=auth) as client:
     return await client.list_tools()
 ```
 
-Per-call connections — no persistent sessions to manage, no stale connection bugs, auth resolved at call time.
+**OAuth servers** — persistent cached clients (`_oauth_clients`) that preserve the OAuth token for the session. `_build_oauth_provider()` decides whether to use bare `auth="oauth"` (dynamic registration) or `OAuth(client_id=..., client_secret=...)` (pre-registered client).
+
+`_resolve_auth()` implements the `bearer_env` priority chain: client header > KeyStore (dashboard) > env var > None.
+
+`shutdown()` cleanly closes all cached OAuth clients (called on `Ctrl+C` via `cli.py`).
 
 ### `index.py` — the tool catalog
 
@@ -149,7 +162,23 @@ You could swap in fuzzy (`rapidfuzz`) or semantic (embeddings) without changing 
 
 ### `auth.py` — credential injection
 
-Returns headers per server based on auth type: `none`, `bearer_env` (read PAT from env), `static_header` (custom header from env), or `token_passthrough` (forward client's Authorization). Tokens never appear in scope.yaml — only env var **names** do.
+Returns headers per server based on auth type: `none`, `bearer_env`, `static_header`, `token_passthrough`, or `oauth`. For `oauth`, returns empty headers since `fastmcp` handles token injection internally. For `bearer_env`, the full resolution happens in `upstream.py`'s `_resolve_auth()` (client header > KeyStore > env var). Tokens never appear in scope.yaml — only env var **names** do.
+
+### `patches.py` — OAuth compatibility
+
+Applied once at startup. Fixes two issues in the MCP SDK:
+1. Accepts any 2xx status from token endpoints (not just 200)
+2. Handles form-encoded token responses from providers like GitHub (`access_token=...&token_type=bearer` instead of JSON)
+
+### `routes.py` + `dashboard.html` — web dashboard
+
+`routes.py` registers Starlette routes on the FastMCP server for the dashboard page (`/`) and JSON APIs (`/api/stats`, `/api/servers`, `/api/tools`, `/api/search`, etc.). Includes endpoints for OAuth connect/disconnect and API key management.
+
+`dashboard.html` is a single-file HTML/CSS/JS dashboard with server cards, tool browser, search, and stats.
+
+### `keystore.py` — API key store
+
+Abstract `KeyStore` base class and `InMemoryKeyStore` implementation. Keys entered via the dashboard are stored here. For production, swap in a `RedisKeyStore` or database-backed store.
 
 ### `audit.py` — JSONL logging
 
@@ -210,25 +239,39 @@ You pick which scope is active per proxy instance via `--scope` flag. In product
 
 The active scope is set during `Guardian.__init__` and the index built once at startup. **Switching scopes requires restarting the proxy** — this is intentional, simpler, and means there's no runtime mistake possible.
 
-## 7. Do We Have a UI?
+## 7. The Web Dashboard
 
-**No standalone UI.** The proxy is headless — it speaks MCP over Streamable HTTP / SSE / stdio. You interact with it through:
+The proxy serves a web dashboard at `http://localhost:9000/` alongside the MCP endpoint at `/mcp`. You interact with mcp-guardian through:
 
-1. **MCP clients** (Claude Desktop, Cursor, custom agents) — they connect to `http://localhost:9000/mcp` and see 3 tools
-2. **MCP Inspector** ([github.com/modelcontextprotocol/inspector](https://github.com/modelcontextprotocol/inspector)) — a browser-based debug UI for any MCP server. This is what to use in the live demo
-3. **Startup output** — the proxy prints a savings report to stdout when it starts:
-   ```
-   mcp-guardian started
-     Scope:          support-agent
-     Servers:        2
-     Tools in scope: 14
-     Direct cost:    160,143 tokens
-     Proxy cost:     456 tokens
-     Savings:        99.7%
-   ```
-4. **Audit log** — `tail -f audit.log` shows JSONL entries as calls happen (great for the demo)
+1. **Web dashboard** (`http://localhost:9000/`) — server management, tool browsing, search, and stats
+2. **MCP clients** (Claude Desktop, Cursor, custom agents) — connect to `http://localhost:9000/mcp` and see 3 tools
+3. **MCP Inspector** ([github.com/modelcontextprotocol/inspector](https://github.com/modelcontextprotocol/inspector)) — a browser-based debug UI for any MCP server
 
-If you wanted a UI later, the natural addition would be a small web dashboard reading `audit.log` and showing live token savings, tool call frequency, etc.
+**Dashboard features:**
+
+- **Stats cards** — tools in scope, direct vs proxy token cost, savings percentage
+- **Server cards** — each upstream server shows as a card with its status:
+  - *Connected* — tools are indexed and browsable (auto-expanded)
+  - *Pending OAuth* — click "Connect" to trigger browser-based authorization
+  - *Needs API Key* — paste an API key (saved in browser localStorage)
+  - *Connecting...* — OAuth flow in progress
+- **Tool browser** — connected servers auto-expand to show their tools with token costs
+- **Tool search** — search across all indexed tools by keyword
+- **OAuth connect/disconnect** — manage OAuth sessions per server
+- **API key management** — save and remove API keys from the dashboard
+
+**Startup output** (printed to terminal):
+```
+mcp-guardian started
+  Scope:          support-agent
+  Servers:        3
+  Tools in scope: 7
+  Direct cost:    108,549 tokens
+  Proxy cost:     155 tokens
+  Savings:        99.9%
+  Deferred:       github, trends (will index on first call)
+  Dashboard:      http://0.0.0.0:9000/
+```
 
 ## 8. How Devs Extend It to More MCP Servers
 
@@ -280,9 +323,10 @@ Set the env var, restart the proxy. **Done.** No Python required.
 | Type | Use when |
 |------|----------|
 | `none` | Public server, no auth |
-| `bearer_env` | Server expects `Authorization: Bearer <token>` |
+| `bearer_env` | Server expects `Authorization: Bearer <token>` (from env, dashboard, or client header) |
 | `static_header` | Server expects a custom header (`X-API-Key`, etc.) |
 | `token_passthrough` | Forward whatever Authorization header the client sends (per-user OAuth via gateway) |
+| `oauth` | Server supports MCP OAuth discovery. Optional `client_id` / `client_secret_env` for pre-registered apps |
 
 ### Add a new search strategy (Python, but easy)
 

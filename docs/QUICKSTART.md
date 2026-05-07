@@ -27,7 +27,12 @@ Edit `.env` with your values:
 ```bash
 # Required: at least one upstream server
 POSTGRES_MCP_URL=http://localhost:3000/mcp
-GITHUB_TOKEN=ghp_your_token_here
+
+# Optional: GitHub OAuth (or connect via dashboard)
+GITHUB_OAUTH_SECRET=your_github_oauth_secret
+
+# Optional: Trends API key (or enter via dashboard)
+TRENDS_API_KEY=your_trends_key
 
 # Proxy settings (defaults are fine for local dev)
 GUARDIAN_SCOPE=support-agent
@@ -39,11 +44,11 @@ GUARDIAN_SCOPE=support-agent
 cp examples/scope.direct.yaml scope.yaml
 ```
 
-The example config defines two scopes:
-- `support-agent` — read-only tools (7 postgres + 7 github)
+The example config defines three upstream servers and two scopes:
+- `support-agent` — read-only tools (7 postgres + 7 github + 1 trends)
 - `developer` — full access minus destructive operations
 
-Edit `scope.yaml` to customize tool access per scope.
+Edit `scope.yaml` to customize tool access per scope. See [WRITING_SCOPE_YAML.md](WRITING_SCOPE_YAML.md) for the full reference.
 
 ## 4. Start Upstream Servers
 
@@ -56,7 +61,9 @@ docker run --rm -p 3000:3000 \
   --transport http --port 3000
 ```
 
-**GitHub MCP** — no server to start, just set `GITHUB_TOKEN` in `.env`.
+**GitHub MCP** — uses OAuth. The proxy will prompt for authorization via the dashboard when you click "Connect".
+
+**Trends MCP** — uses an API key. Set `TRENDS_API_KEY` in `.env` or enter it in the dashboard.
 
 ## 5. Verify Upstream
 
@@ -64,19 +71,7 @@ docker run --rm -p 3000:3000 \
 uv run python scripts/verify_upstream.py
 ```
 
-Expected output:
-
-```
-=== Upstream Server Verification ===
---- PostgreSQL MCP (http://localhost:3000/mcp) ---
-  Tools found: 248
-  OK: 248 tools (>= 200)
-  OK: pg_list_tables returned real data
---- GitHub MCP (https://api.githubcopilot.com/mcp/) ---
-  Tools found: 41
-  OK: 41 tools (>= 30)
-All checks passed.
-```
+This checks that PostgreSQL MCP is reachable and returns tools. GitHub and Trends will be verified when you connect via the dashboard.
 
 ## 6. Start the Proxy
 
@@ -84,9 +79,37 @@ All checks passed.
 uv run mcp-guardian --scope support-agent
 ```
 
-The proxy starts on `http://localhost:9000/mcp`.
+The proxy starts with:
+- **MCP endpoint** at `http://localhost:9000/mcp`
+- **Web dashboard** at `http://localhost:9000/`
 
-## 7. Connect a Client
+The startup output shows a savings report:
+
+```
+mcp-guardian started
+  Scope:          support-agent
+  Servers:        3
+  Tools in scope: 7
+  Direct cost:    108,549 tokens
+  Proxy cost:     155 tokens
+  Savings:        99.9%
+  Deferred:       github, trends (will index on first call)
+  Dashboard:      http://0.0.0.0:9000/
+```
+
+Servers that require OAuth or an API key are **deferred** at startup and show as "Pending" on the dashboard.
+
+## 7. Use the Dashboard
+
+Open `http://localhost:9000/` in your browser. The dashboard shows:
+
+- **Server cards** with status (Connected, Pending OAuth, Needs API Key)
+- Connected servers auto-expand to show their tools
+- Click **Connect** on OAuth servers to trigger browser-based authorization
+- Paste API keys for `bearer_env` servers (saved in browser localStorage)
+- **Tool Search** to find tools across all connected servers
+
+## 8. Connect a Client
 
 Point any MCP client at `http://localhost:9000/mcp`. It will see three tools:
 
@@ -94,7 +117,11 @@ Point any MCP client at `http://localhost:9000/mcp`. It will see three tools:
 - `get_schema` — get parameters for a tool
 - `execute_tool` — run a tool
 
-## 8. Run Tests
+## 9. Graceful Shutdown
+
+Press `Ctrl+C` to stop the proxy. It cleanly closes all cached OAuth client sessions before exiting.
+
+## 10. Run Tests
 
 ```bash
 # Unit tests
@@ -112,4 +139,4 @@ If you prefer Docker:
 docker compose up --build
 ```
 
-This starts both PostgreSQL MCP and the guardian proxy. Connect your client to `http://localhost:9000/mcp`.
+This starts both PostgreSQL MCP and the guardian proxy. Connect your client to `http://localhost:9000/mcp` and open the dashboard at `http://localhost:9000/`.

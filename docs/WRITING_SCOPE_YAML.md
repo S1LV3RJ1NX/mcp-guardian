@@ -75,14 +75,16 @@ trends:
     value_env: TRENDS_API_KEY     # optional env var name
 ```
 
-The proxy resolves the bearer token from three sources in priority
+The proxy resolves the bearer token from four sources in priority
 order:
 
-1. **KeyStore** (dashboard UI or external store) — if a user entered a
-   key via the web dashboard, it's cached in the KeyStore and used first.
-2. **Environment variable** (`value_env`) — if the env var is set, its
+1. **Client `Authorization` header** — if the MCP client sends an
+   `Authorization: Bearer <token>` header, that token is used first.
+2. **KeyStore** (dashboard UI or external store) — if a user entered a
+   key via the web dashboard, it's cached in the KeyStore and used next.
+3. **Environment variable** (`value_env`) — if the env var is set, its
    value is used as the bearer token.
-3. **None** — if no key is available from either source, the server is
+4. **None** — if no key is available from any source, the server is
    deferred at startup. The dashboard will show an API key input field.
 
 This means you can:
@@ -147,11 +149,38 @@ The proxy delegates the full OAuth flow to `fastmcp`'s built-in OAuth
 client. On first use, a browser window opens for authorization. The
 token is cached in a persistent client connection for the session.
 
+#### Pre-registered OAuth clients
+
+If the MCP server supports OAuth discovery (`/.well-known/oauth-authorization-server`)
+but does **not** support dynamic client registration (RFC 7591), you can
+provide a pre-registered `client_id` and optional `client_secret_env`:
+
+```yaml
+github:
+  url: https://api.githubcopilot.com/mcp/
+  auth:
+    type: oauth
+    client_id: Iv23li4KZ7YdOCyEdolv
+    client_secret_env: GITHUB_OAUTH_SECRET   # optional, for confidential clients
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `client_id` | No | Pre-registered OAuth client ID. Skips dynamic registration. |
+| `client_secret_env` | No | Env var holding the client secret. Only needed for confidential clients. |
+
+When `client_id` is set, `fastmcp` still discovers auth/token URLs from
+`/.well-known` but uses your credentials instead of registering a new client.
+
+If the server has **neither** OAuth discovery nor dynamic registration
+(e.g., raw GitHub, Slack, Notion), use an MCP gateway that provides
+the discovery endpoint.
+
 **Dashboard behavior:**
 
 - OAuth servers that haven't been authorized show a "Connect" button
 - Clicking "Connect" triggers the browser-based OAuth flow
-- After completing OAuth, click "Refresh" to load the server's tools
+- After completing OAuth, tools auto-expand on the dashboard
 - Connected OAuth servers show a "Disconnect" button
 
 ---
@@ -324,15 +353,17 @@ upstream = UpstreamManager(servers, key_store=store)
 
 ```yaml
 upstream_servers:
+  github:
+    url: https://api.githubcopilot.com/mcp/
+    auth:
+      type: oauth
+      client_id: Iv23li...
+      client_secret_env: GITHUB_OAUTH_SECRET
+
   postgres:
     url_env: POSTGRES_MCP_URL
     auth:
       type: none
-
-  github-oauth:
-    url: https://gateway.truefoundry.ai/tfy-eo/mcp/github-mcp/server
-    auth:
-      type: oauth
 
   trends:
     url: https://x-twitter.api.trendsmcp.ai/mcp
@@ -344,33 +375,38 @@ scopes:
   support-agent:
     description: "Read-only tools for support agents"
     servers:
+      github:
+        allowed_tools:
+          - get_me
+          - list_issues
+          - search_issues
       postgres:
         allowed_tools:
           - pg_read_query
           - pg_list_tables
           - pg_describe_table
-      github-oauth:
-        allowed_tools:
-          - list_issues
-          - search_issues
       trends:
-        allowed_tools: "*"
+        allowed_tools:
+          - trendsMCP___get_top_trends
 
   developer:
     description: "Full access minus destructive operations"
     servers:
+      github:
+        allowed_tools: "*"
+        blocked_tools:
+          - delete_file
+          - push_files
       postgres:
         allowed_tools: "*"
         blocked_tools:
           - pg_drop_table
           - pg_truncate
-      github-oauth:
-        allowed_tools: "*"
-        blocked_tools:
-          - delete_file
-          - push_files
       trends:
-        allowed_tools: "*"
+        allowed_tools:
+          - trendsMCP___get_top_trends
+          - trendsMCP___get_trends
+          - trendsMCP___get_growth
 
 audit:
   enabled: true
