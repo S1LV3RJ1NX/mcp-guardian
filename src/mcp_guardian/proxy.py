@@ -44,6 +44,7 @@ class Guardian:
             ),
         )
         self._register_meta_tools()
+        self._register_dashboard()
 
     def _register_meta_tools(self) -> None:
         """Register the 3 meta-tools on the FastMCP server."""
@@ -174,6 +175,12 @@ class Guardian:
                 )
                 return {"error": error_str, "code": "UPSTREAM_ERROR"}
 
+    def _register_dashboard(self) -> None:
+        """Mount the web dashboard on the same HTTP server."""
+        from mcp_guardian.routes import register_dashboard_routes
+
+        register_dashboard_routes(self)
+
     def _try_index_deferred(self) -> None:
         """Kick off deferred indexing in the background (non-blocking).
 
@@ -258,4 +265,7 @@ class Guardian:
         import asyncio
 
         asyncio.run(self.startup())
+        host = kwargs.get("host", "0.0.0.0")
+        port = kwargs.get("port", 9000)
+        print(f"  Dashboard:      http://{host}:{port}/")  # noqa: T201
         self.server.run(**kwargs)

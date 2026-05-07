@@ -169,6 +169,68 @@ class ToolIndex:
 
         return indexed
 
+    async def index_single_deferred(
+        self,
+        server_name: str,
+        config: GuardianConfig,
+        upstream: UpstreamManager,
+    ) -> bool:
+        """Try to index a single deferred server (e.g. after OAuth).
+
+        Args:
+            server_name: The server to attempt indexing.
+            config: The loaded guardian config.
+            upstream: The upstream manager.
+
+        Returns:
+            True if the server was successfully indexed.
+        """
+        if server_name not in self._deferred_servers:
+            return False
+
+        scope = config.scopes[config.active_scope]
+        scope_server = scope.servers.get(server_name)
+        if scope_server is None:
+            return False
+
+        try:
+            tools = await upstream.list_tools(server_name)
+        except Exception:
+            logger.warning(
+                "Single deferred indexing failed for '%s'",
+                server_name,
+                exc_info=True,
+            )
+            return False
+
+        allowed = scope_server.allowed_tools
+        blocked = set(scope_server.blocked_tools)
+
+        for tool in tools:
+            schema = tool.model_dump()
+            tokens = count_schema_tokens(schema)
+            if _is_tool_allowed(tool.name, allowed, blocked):
+                self.entries[tool.name] = ToolEntry(
+                    name=tool.name,
+                    server=server_name,
+                    description=tool.description or "",
+                    brief=_make_brief(tool.description or ""),
+                    full_schema=schema,
+                    token_cost=tokens,
+                )
+            else:
+                self.tokens_saved += tokens
+                self._excluded_count += 1
+
+        if server_name in self._deferred_servers:
+            self._deferred_servers.remove(server_name)
+        logger.info(
+            "Server '%s': deferred indexing complete (%d tools)",
+            server_name,
+            len(tools),
+        )
+        return True
+
     def search(self, query: str) -> list[SearchResult]:
         """Search indexed tools by query.
 
