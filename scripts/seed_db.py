@@ -4,7 +4,7 @@ Usage:
     uv run python scripts/seed_db.py
 
 Reads POSTGRES_URL from env or .env file.
-Default: postgresql://postgres:PASSWORD_REDACTED@postgres-eo.eastus.cloudapp.azure.com:5432/mcp-dev-summit
+Default: reads from POSTGRES_URL env var or .env file
 
 Idempotent — safe to run multiple times (uses IF NOT EXISTS / ON CONFLICT).
 """
@@ -16,9 +16,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-POSTGRES_URL_DEFAULT = (
-    "postgresql://postgres:PASSWORD_REDACTED@postgres-eo.eastus.cloudapp.azure.com:5432/mcp-dev-summit"
-)
+POSTGRES_URL_DEFAULT = "postgresql://postgres:password@localhost:5432/mcp-dev-summit"
 
 SEED_SQL = """\
 -- Customers
