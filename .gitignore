@@ -9,3 +9,4 @@ scope.yaml
 .env
 .coverage
 htmlcov/
+deploy.yaml
