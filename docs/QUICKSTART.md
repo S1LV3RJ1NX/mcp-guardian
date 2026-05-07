@@ -36,6 +36,11 @@ TRENDS_API_KEY=your_trends_key
 
 # Proxy settings (defaults are fine for local dev)
 GUARDIAN_SCOPE=support-agent
+
+# Optional: LLM for the Chat Demo tab (any OpenAI-compatible endpoint)
+GUARDIAN_LLM_BASE_URL=https://api.openai.com/v1
+GUARDIAN_LLM_API_KEY=sk-...
+GUARDIAN_LLM_MODEL_NAME=gpt-4o-mini
 ```
 
 ## 3. Configure Scope
@@ -109,7 +114,21 @@ Open `http://localhost:9000/` in your browser. The dashboard shows:
 - Paste API keys for `bearer_env` servers (saved in browser localStorage)
 - **Tool Search** to find tools across all connected servers
 
-## 8. Connect a Client
+## 8. Chat Demo (Optional)
+
+The dashboard includes a **Chat Demo** tab that lets you converse with your tools using an LLM. It shows token accounting in real time — comparing what a direct connection would cost vs the proxy.
+
+To enable it, set the LLM env vars in `.env`:
+
+```bash
+GUARDIAN_LLM_API_KEY=sk-your-key
+```
+
+Then open the dashboard, switch to the "Chat Demo" tab, and type a natural language query like "list all tables" or "latest trends in India". The agent uses the same progressive discovery pattern (search → schema → execute) and streams each step live.
+
+Any OpenAI-compatible endpoint works — set `GUARDIAN_LLM_BASE_URL` to point at Ollama, Azure OpenAI, etc.
+
+## 9. Connect a Client
 
 Point any MCP client at `http://localhost:9000/mcp`. It will see three tools:
 
@@ -117,11 +136,11 @@ Point any MCP client at `http://localhost:9000/mcp`. It will see three tools:
 - `get_schema` — get parameters for a tool
 - `execute_tool` — run a tool
 
-## 9. Graceful Shutdown
+## 10. Graceful Shutdown
 
 Press `Ctrl+C` to stop the proxy. It cleanly closes all cached OAuth client sessions before exiting.
 
-## 10. Run Tests
+## 11. Run Tests
 
 ```bash
 # Unit tests
@@ -131,7 +150,7 @@ uv run pytest tests/ -v
 uv run pytest tests/ -v -m integration
 ```
 
-## Docker Alternative
+## 12. Docker Alternative
 
 If you prefer Docker:
 

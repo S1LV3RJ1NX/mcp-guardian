@@ -54,11 +54,13 @@ def test_savings_report_structure() -> None:
 
     assert "direct_tokens" in report
     assert "proxy_tokens" in report
+    assert "in_scope_tokens" in report
     assert "savings_pct" in report
     assert "tools_in_scope" in report
     assert "tools_excluded" in report
 
     assert report["direct_tokens"] == 6000
+    assert report["in_scope_tokens"] == 1000
     assert report["tools_in_scope"] == 2
     assert report["tools_excluded"] == 10
     assert report["savings_pct"] > 0

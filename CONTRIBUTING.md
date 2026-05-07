@@ -80,6 +80,7 @@ src/mcp_guardian/       # Main package
   proxy.py              # Core proxy (3 meta-tools)
   index.py              # Tool index + search
   upstream.py           # Upstream connection manager
+  chat.py               # Chat Demo agent (LLM agentic loop + SSE)
   search/               # Search strategies (pluggable)
 tests/                  # Unit + integration tests
 benchmarks/             # 5 experiments with results

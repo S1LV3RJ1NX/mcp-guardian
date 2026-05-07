@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 
 from mcp_guardian.settings import get_settings
 
@@ -13,6 +14,11 @@ def main() -> None:
     from mcp_guardian.patches import apply_patches
 
     apply_patches()
+    logging.basicConfig(
+        level=logging.WARNING,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
+    logging.getLogger("mcp_guardian").setLevel(logging.WARNING)
     parser = argparse.ArgumentParser(
         description="mcp-guardian: MCP proxy for tool scoping and progressive discovery",
     )

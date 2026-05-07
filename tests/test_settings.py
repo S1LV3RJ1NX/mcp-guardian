@@ -12,8 +12,9 @@ from mcp_guardian.settings import GuardianSettings, get_env_var, get_settings
 
 def test_default_settings_values(monkeypatch: pytest.MonkeyPatch) -> None:
     """Default settings have correct values when no env vars are set."""
-    for key in ("GUARDIAN_HOST", "GUARDIAN_PORT", "GUARDIAN_SCOPE", "GUARDIAN_LOG_LEVEL"):
-        monkeypatch.delenv(key, raising=False)
+    for key in list(os.environ):
+        if key.startswith("GUARDIAN_"):
+            monkeypatch.delenv(key, raising=False)
     settings = GuardianSettings(_env_file=None)  # type: ignore[call-arg]
     assert settings.host == "0.0.0.0"
     assert settings.port == 9000
@@ -21,6 +22,9 @@ def test_default_settings_values(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.config_path == "scope.yaml"
     assert settings.scope == ""
     assert settings.log_level == "INFO"
+    assert settings.llm_base_url == "https://api.openai.com/v1"
+    assert settings.llm_api_key == ""
+    assert settings.llm_model_name == "gpt-4o-mini"
 
 
 def test_get_settings_with_overrides() -> None:

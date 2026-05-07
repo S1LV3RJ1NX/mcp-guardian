@@ -172,9 +172,26 @@ Applied once at startup. Fixes two issues in the MCP SDK:
 
 ### `routes.py` + `dashboard.html` — web dashboard
 
-`routes.py` registers Starlette routes on the FastMCP server for the dashboard page (`/`) and JSON APIs (`/api/stats`, `/api/servers`, `/api/tools`, `/api/search`, etc.). Includes endpoints for OAuth connect/disconnect and API key management.
+`routes.py` registers Starlette routes on the FastMCP server for the dashboard page (`/`) and JSON APIs (`/api/stats`, `/api/servers`, `/api/tools`, `/api/search`, etc.). Includes endpoints for OAuth connect/disconnect, API key management, and the Chat Demo SSE endpoint (`POST /api/chat`).
 
-`dashboard.html` is a single-file HTML/CSS/JS dashboard with server cards, tool browser, search, and stats.
+`dashboard.html` is a single-file HTML/CSS/JS dashboard with two tabs: the main **Dashboard** (server cards, tool browser, search, stats) and the **Chat Demo** (conversational tool use with live token accounting).
+
+### `chat.py` — Chat Demo agent
+
+`ChatAgent` implements an LLM-driven agentic loop that demonstrates progressive discovery in action. It uses the same three meta-tools the proxy exposes (`search_tools`, `get_schema`, `execute_tool`) but driven by an LLM via OpenAI function calling.
+
+Key components:
+
+- **`META_TOOLS`** — the function-calling schema given to the LLM, mirroring the proxy's 3 meta-tools
+- **`SYSTEM_PROMPT`** — instructs the LLM to follow the search → schema → execute pattern and never guess parameters
+- **`run_stream()`** — an `AsyncIterator` that yields SSE events as each tool step completes:
+  - `type: "step"` — one tool action with name, tokens, and duration
+  - `type: "reply"` — the final LLM response with full token accounting
+  - `type: "error"` — if something goes wrong
+- **`MAX_TOOL_LOOPS = 6`** — caps the total agentic loop iterations per conversation turn
+- **`MAX_TOOL_FAILURES = 2`** — if the same tool fails twice, the agent stops retrying and asks the LLM to summarize with available information
+
+The `/api/chat` endpoint in `routes.py` wraps `run_stream()` in a `StreamingResponse` (SSE), so the dashboard can show each step live as it happens. The frontend accumulates token counts across the conversation and displays a side-by-side comparison of costs with and without the proxy.
 
 ### `keystore.py` — API key store
 
@@ -191,6 +208,13 @@ Wraps `tiktoken` (cl100k_base) with lazy loading and a `len(text) // 4` fallback
 ### `settings.py` — env vars
 
 Pydantic Settings with `GUARDIAN_` prefix for runtime config (host, port, scope). `load_dotenv()` is called at import time so any `.env` var (`GITHUB_TOKEN`, `POSTGRES_MCP_URL`, etc.) is available throughout the codebase.
+
+Also includes LLM settings for the Chat Demo:
+- `GUARDIAN_LLM_BASE_URL` — any OpenAI-compatible endpoint (default: `https://api.openai.com/v1`)
+- `GUARDIAN_LLM_API_KEY` — API key for the LLM provider
+- `GUARDIAN_LLM_MODEL_NAME` — model to use (default: `gpt-4o-mini`)
+
+These are optional — the Chat Demo tab is only active when `GUARDIAN_LLM_API_KEY` is set.
 
 ## 5. End-to-End Flow
 
@@ -259,6 +283,7 @@ The proxy serves a web dashboard at `http://localhost:9000/` alongside the MCP e
 - **Tool search** — search across all indexed tools by keyword
 - **OAuth connect/disconnect** — manage OAuth sessions per server
 - **API key management** — save and remove API keys from the dashboard
+- **Chat Demo tab** — conversational interface powered by an LLM that demonstrates the progressive discovery pattern live, with real-time SSE streaming of each tool step and a token accounting sidebar showing cumulative costs with and without the proxy
 
 **Startup output** (printed to terminal):
 ```
@@ -415,6 +440,9 @@ my-server:
 ```
 
 `fastmcp` will discover `authorization_url` and `token_url` from `/.well-known/oauth-authorization-server` at the server URL, then run the browser-based OAuth flow using your `client_id`. No need to specify auth/token URLs manually.
+
+**Q: How does the Chat Demo work?**
+A: The Chat Demo tab uses an LLM (configurable via `GUARDIAN_LLM_*` env vars) with OpenAI function calling. The LLM is given the same 3 meta-tools (`search_tools`, `get_schema`, `execute_tool`) and a system prompt that enforces the search → schema → execute pattern. Each turn runs an agentic loop (up to 6 iterations) where the LLM picks tools, `ChatAgent` executes them against the proxy's index and upstream servers, and results stream back to the browser via SSE. The sidebar tracks cumulative token costs — tool schema tokens, LLM input/output tokens, and the difference between using the proxy vs exposing all tools directly. If a tool fails twice, the agent stops retrying and asks the LLM to summarize with whatever data it has.
 
 ## Related Docs
 

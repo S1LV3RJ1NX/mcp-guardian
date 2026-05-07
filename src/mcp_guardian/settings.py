@@ -39,6 +39,10 @@ class GuardianSettings(BaseSettings):
 
     log_level: str = "INFO"
 
+    llm_base_url: str = "https://api.openai.com/v1"
+    llm_api_key: str = ""
+    llm_model_name: str = "gpt-4o-mini"
+
 
 def get_settings(**overrides: object) -> GuardianSettings:
     """Load settings from env/.env file with optional overrides."""

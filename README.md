@@ -47,7 +47,7 @@ uv run mcp-guardian --scope support-agent
 #    Connect MCP clients to http://localhost:9000/mcp
 ```
 
-The proxy serves a **web dashboard** at the root URL for managing server connections, browsing tools, entering API keys, and triggering OAuth flows.
+The proxy serves a **web dashboard** at the root URL for managing server connections, browsing tools, entering API keys, triggering OAuth flows, and a **Chat Demo** tab that lets you converse with your tools via an LLM while comparing token costs with and without the proxy.
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) for a detailed walkthrough.
 
@@ -120,6 +120,9 @@ See [docs/WRITING_SCOPE_YAML.md](docs/WRITING_SCOPE_YAML.md) for the full refere
 | `GUARDIAN_CONFIG_PATH` | `scope.yaml` | Path to config file |
 | `GUARDIAN_SCOPE` | (required) | Active scope name |
 | `GUARDIAN_LOG_LEVEL` | `INFO` | Log level |
+| `GUARDIAN_LLM_BASE_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL (for Chat Demo) |
+| `GUARDIAN_LLM_API_KEY` | *(empty)* | LLM API key (for Chat Demo) |
+| `GUARDIAN_LLM_MODEL_NAME` | `gpt-4o-mini` | Model name (for Chat Demo) |
 
 Auth tokens are referenced by name in `scope.yaml` and resolved from `.env`, the dashboard, or client headers.
 

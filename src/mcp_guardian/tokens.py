@@ -133,6 +133,7 @@ def savings_report(index: ToolIndex) -> dict[str, Any]:
     return {
         "direct_tokens": direct_tokens,
         "proxy_tokens": proxy_tokens,
+        "in_scope_tokens": in_scope_tokens,
         "savings_pct": round(savings_pct, 1),
         "tools_in_scope": len(index.entries),
         "tools_excluded": index._excluded_count,

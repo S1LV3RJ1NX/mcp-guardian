@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from starlette.responses import HTMLResponse, JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 if TYPE_CHECKING:
     from starlette.requests import Request
@@ -204,6 +204,50 @@ def register_dashboard_routes(guardian: Guardian) -> None:
         if schema is None:
             return JSONResponse({"error": f"Tool '{tool_name}' not found"}, status_code=404)
         return JSONResponse(schema)
+
+    _chat_agent: dict[str, object] = {}
+
+    @server.custom_route("/api/chat", methods=["POST"])
+    async def api_chat(request: Request) -> StreamingResponse | JSONResponse:
+        from mcp_guardian.chat import ChatAgent
+        from mcp_guardian.settings import get_settings
+
+        body = await request.json()
+        message = body.get("message", "").strip()
+        history = body.get("history", [])
+        if not message:
+            return JSONResponse({"error": "Missing 'message' in body"}, status_code=400)
+
+        settings = get_settings()
+        if not settings.llm_api_key:
+            return JSONResponse(
+                {"error": "GUARDIAN_LLM_API_KEY not configured. Set it in .env"},
+                status_code=500,
+            )
+
+        if "agent" not in _chat_agent:
+            _chat_agent["agent"] = ChatAgent(
+                guardian=guardian,
+                base_url=settings.llm_base_url,
+                api_key=settings.llm_api_key,
+                model=settings.llm_model_name,
+            )
+
+        agent: ChatAgent = _chat_agent["agent"]  # type: ignore[assignment]
+
+        async def _event_stream():  # type: ignore[no-untyped-def]
+            try:
+                async for event in agent.run_stream(message, history):
+                    yield event
+            except Exception as exc:
+                logger.exception("Chat agent error")
+                yield f"data: {json.dumps({'type': 'error', 'error': str(exc)})}\n\n"
+
+        return StreamingResponse(
+            _event_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     @server.custom_route("/api/audit", methods=["GET"])
     async def api_audit(request: Request) -> JSONResponse:

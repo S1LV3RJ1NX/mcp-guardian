@@ -82,8 +82,9 @@ The proxy serves a web dashboard at `http://<host>:<port>/` with API endpoints u
 - **API key input** — paste API keys for `bearer_env` servers, persisted in browser localStorage
 - **Search** — search across all indexed tools
 - **Stats** — tools in scope, token savings, server count
+- **Chat Demo** — conversational interface that uses an LLM (any OpenAI-compatible endpoint) to demonstrate the progressive discovery pattern. Streams each tool call step via SSE and shows real-time token accounting (with vs without proxy)
 
-The dashboard is a single HTML file (`dashboard.html`) served via custom Starlette routes in `routes.py`.
+The dashboard is a single HTML file (`dashboard.html`) served via custom Starlette routes in `routes.py`. The Chat Demo tab uses a `POST /api/chat` SSE endpoint backed by `ChatAgent` in `chat.py`.
 
 ## Module Structure
 
@@ -103,6 +104,7 @@ src/mcp_guardian/
   tokens.py       # tiktoken counting + meta-tool schemas
   proxy.py        # Guardian class (FastMCP server + 3 meta-tools)
   routes.py       # Dashboard HTTP API + static page serving
+  chat.py         # ChatAgent — LLM-driven agentic loop for Chat Demo (SSE streaming)
   keystore.py     # KeyStore ABC + InMemoryKeyStore for API keys
   patches.py      # OAuth compatibility patches (2xx, form-encoded)
   dashboard.html  # Embedded web dashboard (single-file HTML/CSS/JS)

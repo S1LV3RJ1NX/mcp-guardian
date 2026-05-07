@@ -1,470 +1,1645 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mcp-guardian</title>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0d1117;--surface:#161b22;--border:#30363d;
-  --text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;
-  --green:#3fb950;--yellow:#d29922;--red:#f85149;
-  --card-radius:12px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-}
-body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5;padding:0}
-a{color:var(--accent);text-decoration:none}
-
-/* Header */
-.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:10}
-.header h1{font-size:20px;font-weight:600;letter-spacing:-0.5px}
-.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600}
-.badge-scope{background:#1f6feb33;color:var(--accent);border:1px solid #1f6feb55}
-
-/* Layout */
-.container{max-width:1200px;margin:0 auto;padding:24px}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);padding:20px}
-.card .label{font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px}
-.card .value{font-size:28px;font-weight:700;letter-spacing:-1px}
-.card .value.accent{color:var(--accent)}
-.card .value.green{color:var(--green)}
-.card .sub{font-size:12px;color:var(--muted);margin-top:2px}
-
-/* Search */
-.search-section .search-box{width:100%;padding:10px 14px;font-size:14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;transition:border-color .15s}
-.search-section .search-box:focus{border-color:var(--accent)}
-.search-section .search-box::placeholder{color:var(--muted)}
-.results{margin-top:12px;max-height:500px;overflow-y:auto}
-.result-item{padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
-.result-item:hover{background:#1f6feb11}
-.result-item .name{font-weight:600;font-size:14px;color:var(--accent)}
-.result-item .server-tag{font-size:11px;color:var(--muted);margin-left:8px;padding:1px 6px;background:var(--bg);border-radius:4px;border:1px solid var(--border)}
-.result-item .brief{font-size:13px;color:var(--muted);margin-top:2px}
-.schema-preview{margin-top:8px;padding:10px;background:var(--bg);border-radius:6px;font-size:12px;font-family:"SF Mono",Consolas,monospace;white-space:pre-wrap;word-break:break-all;color:var(--muted);max-height:200px;overflow-y:auto;border:1px solid var(--border)}
-.empty-state{padding:32px;text-align:center;color:var(--muted);font-size:13px}
-.section-title{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
-
-/* Server Cards */
-.servers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:24px}
-.srv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;transition:border-color .15s}
-.srv-card:hover{border-color:#484f58}
-.srv-card-header{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;user-select:none}
-.srv-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.srv-icon.github{background:#21262d}
-.srv-icon.database{background:#1a2332}
-.srv-icon.twitter{background:#1c2128}
-.srv-icon.server{background:#1c2128}
-.srv-icon svg{width:22px;height:22px}
-.srv-info{flex:1;min-width:0}
-.srv-name{font-size:15px;font-weight:600;color:var(--text)}
-.srv-meta{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:8px}
-.srv-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
-.srv-status.connected{background:#23883833;color:var(--green)}
-.srv-status.pending{background:#d2992233;color:var(--yellow)}
-.srv-status.connecting{background:#1f6feb22;color:var(--accent)}
-.srv-status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
-.srv-status.connected .srv-status-dot{background:var(--green)}
-.srv-status.pending .srv-status-dot{background:var(--yellow)}
-.srv-status.connecting .srv-status-dot{background:var(--accent);animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.srv-tool-count{font-size:13px;color:var(--muted);font-weight:500}
-.srv-actions{display:flex;gap:8px;padding:0 20px 16px;align-items:center;flex-wrap:wrap}
-.btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:all .15s}
-.btn-connect{background:var(--accent);color:#0d1117}
-.btn-connect:hover{background:#79c0ff}
-.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--muted)}
-.btn-refresh:hover{border-color:var(--muted);color:var(--text)}
-.btn-disconnect{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:11px}
-.btn-disconnect:hover{border-color:var(--red);color:var(--red)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.srv-tools{border-top:1px solid var(--border);max-height:350px;overflow-y:auto;display:none}
-.srv-tools.open{display:block}
-.srv-tool-item{padding:8px 20px;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;align-items:center}
-.srv-tool-item:last-child{border-bottom:none}
-.srv-tool-item .tname{color:var(--text);font-weight:500}
-.srv-tool-item .tbrief{font-size:11px;color:var(--muted);margin-top:1px}
-.srv-tool-item .tcost{font-size:11px;color:var(--muted);font-family:"SF Mono",Consolas,monospace;flex-shrink:0;margin-left:12px}
-.srv-empty{padding:20px;text-align:center;color:var(--muted);font-size:12px}
-
-/* Key input */
-.key-form{display:flex;gap:8px;align-items:center;width:100%}
-.key-input{flex:1;padding:6px 10px;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;font-family:"SF Mono",Consolas,monospace}
-.key-input:focus{border-color:var(--accent)}
-.key-input::placeholder{color:var(--muted)}
-.btn-save{background:var(--green);color:#0d1117}
-.btn-save:hover{background:#56d364}
-.key-saved{font-size:11px;color:var(--green);display:inline-flex;align-items:center;gap:4px}
-</style>
-</head>
-<body>
-
-<div class="header">
-  <h1>mcp-guardian</h1>
-  <span class="badge badge-scope" id="scope-badge">--</span>
-</div>
-
-<div class="container">
-  <!-- Stats Cards -->
-  <div class="stats-grid">
-    <div class="card">
-      <div class="label">Tools in Scope</div>
-      <div class="value accent" id="stat-tools">--</div>
-      <div class="sub" id="stat-excluded">-- excluded by scope</div>
-    </div>
-    <div class="card">
-      <div class="label">Direct Token Cost</div>
-      <div class="value" id="stat-direct">--</div>
-      <div class="sub">without proxy</div>
-    </div>
-    <div class="card">
-      <div class="label">Proxy Token Cost</div>
-      <div class="value green" id="stat-proxy">--</div>
-      <div class="sub">3 meta-tools only</div>
-    </div>
-    <div class="card">
-      <div class="label">Savings</div>
-      <div class="value green" id="stat-savings">--</div>
-      <div class="sub" id="stat-servers">-- servers</div>
-    </div>
-  </div>
-
-  <!-- Upstream Servers -->
-  <div class="section-title" style="margin-bottom:16px"><span class="dot"></span> Upstream Servers</div>
-  <div class="servers-grid" id="servers-grid">
-    <div class="empty-state">Loading servers...</div>
-  </div>
-
-  <!-- Search -->
-  <div class="card search-section">
-    <div class="section-title"><span class="dot"></span> Tool Search</div>
-    <input type="text" class="search-box" id="search-input" placeholder="Search tools... (e.g. tables, issues, query)">
-    <div class="results" id="search-results">
-      <div class="empty-state">Type a query to search available tools</div>
-    </div>
-  </div>
-</div>
-
-<script>
-const API = '';
-const LS_KEY_PREFIX = 'guardian_key_';
-
-const ICONS = {
-  github: '<svg viewBox="0 0 24 24" fill="currentColor" color="#e6edf3"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>',
-  database: '<svg viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>',
-  twitter: '<svg viewBox="0 0 24 24" fill="#e6edf3"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
-  server: '<svg viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>'
-};
-
-function fmt(n) {
-  return n == null ? '--' : n.toLocaleString();
-}
-
-function esc(s) {
-  if (!s) return '';
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
-}
-
-/* ---------- localStorage key helpers ---------- */
-function getSavedKey(name) {
-  try { return localStorage.getItem(LS_KEY_PREFIX + name) || ''; } catch { return ''; }
-}
-function saveKey(name, key) {
-  try { localStorage.setItem(LS_KEY_PREFIX + name, key); } catch {}
-}
-function removeSavedKey(name) {
-  try { localStorage.removeItem(LS_KEY_PREFIX + name); } catch {}
-}
-
-/* ---------- Stats ---------- */
-async function loadStats() {
-  try {
-    const r = await fetch(API + '/api/stats');
-    const d = await r.json();
-    document.getElementById('scope-badge').textContent = 'scope: ' + d.scope;
-    document.getElementById('stat-tools').textContent = fmt(d.tools_in_scope);
-    document.getElementById('stat-excluded').textContent = fmt(d.tools_excluded) + ' excluded by scope';
-    document.getElementById('stat-direct').textContent = fmt(d.direct_tokens);
-    document.getElementById('stat-proxy').textContent = fmt(d.proxy_tokens);
-    document.getElementById('stat-savings').textContent = d.savings_pct + '%';
-    document.getElementById('stat-servers').textContent = d.servers.length + ' server' + (d.servers.length !== 1 ? 's' : '');
-  } catch (e) { console.error('Stats error', e); }
-}
-
-/* ---------- Servers ---------- */
-let expandedServers = new Set();
-
-async function loadServers() {
-  try {
-    const r = await fetch(API + '/api/servers');
-    const servers = await r.json();
-    const grid = document.getElementById('servers-grid');
-    if (!servers.length) {
-      grid.innerHTML = '<div class="empty-state">No servers configured</div>';
-      return;
-    }
-    grid.innerHTML = servers.map(s => renderServerCard(s)).join('');
-
-    for (const s of servers) {
-      if (s.needs_key && getSavedKey(s.name)) {
-        autoRestoreKey(s.name);
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>mcp-guardian</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-      if (s.status === 'connected') {
-        expandedServers.add(s.name);
+      :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --border: #30363d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+        --green: #3fb950;
+        --yellow: #d29922;
+        --red: #f85149;
+        --card-radius: 12px;
+        --font:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+          sans-serif;
       }
-    }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        line-height: 1.5;
+        padding: 0;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
 
-    for (const name of expandedServers) {
-      const toolsEl = document.getElementById('srv-tools-' + name);
-      if (toolsEl) reloadServerTools(name, toolsEl);
-    }
-  } catch (e) { console.error('Servers error', e); }
-}
+      /* Header */
+      .header {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .badge-scope {
+        background: #1f6feb33;
+        color: var(--accent);
+        border: 1px solid #1f6feb55;
+      }
 
-function renderServerCard(s) {
-  const icon = ICONS[s.icon] || ICONS.server;
-  const statusClass = s.status;
-  const statusLabel = s.status === 'connected' ? 'Connected'
-    : s.status === 'connecting' ? 'Connecting...'
-    : s.needs_key ? 'Needs API Key'
-    : 'Pending OAuth';
-  const toolLabel = s.status === 'connected' ? s.tool_count + ' tool' + (s.tool_count !== 1 ? 's' : '') : '';
+      /* Layout */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--card-radius);
+        padding: 20px;
+      }
+      .card .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .card .value {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -1px;
+      }
+      .card .value.accent {
+        color: var(--accent);
+      }
+      .card .value.green {
+        color: var(--green);
+      }
+      .card .sub {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
 
-  let actions = '';
+      /* Search */
+      .search-section .search-box {
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 14px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .search-section .search-box:focus {
+        border-color: var(--accent);
+      }
+      .search-section .search-box::placeholder {
+        color: var(--muted);
+      }
+      .results {
+        margin-top: 12px;
+        max-height: 500px;
+        overflow-y: auto;
+      }
+      .result-item {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .result-item:hover {
+        background: #1f6feb11;
+      }
+      .result-item .name {
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--accent);
+      }
+      .result-item .server-tag {
+        font-size: 11px;
+        color: var(--muted);
+        margin-left: 8px;
+        padding: 1px 6px;
+        background: var(--bg);
+        border-radius: 4px;
+        border: 1px solid var(--border);
+      }
+      .result-item .brief {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .schema-preview {
+        margin-top: 8px;
+        padding: 10px;
+        background: var(--bg);
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: "SF Mono", Consolas, monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+        color: var(--muted);
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+      }
+      .empty-state {
+        padding: 32px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-title .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        display: inline-block;
+      }
 
-  if (s.needs_key) {
-    const saved = getSavedKey(s.name);
-    actions = '<div class="srv-actions">' +
-      '<div class="key-form">' +
-        '<input type="password" class="key-input" id="key-input-' + esc(s.name) + '" ' +
-          'placeholder="Paste API key..." value="' + esc(saved) + '">' +
-        '<button class="btn btn-save" onclick="event.stopPropagation();submitKey(\'' + esc(s.name) + '\')">Save</button>' +
-      '</div>' +
-    '</div>';
-  } else if (s.status === 'pending' && s.auth_type === 'oauth') {
-    actions = '<div class="srv-actions">' +
-      '<button class="btn btn-connect" onclick="connectServer(\'' + esc(s.name) + '\')">Connect</button>' +
-      '</div>';
-  } else if (s.status === 'connecting') {
-    actions = '<div class="srv-actions">' +
-      '<button class="btn btn-connect" disabled>Connecting...</button>' +
-      '<button class="btn btn-refresh" onclick="refreshServer(\'' + esc(s.name) + '\')">Refresh</button>' +
-      '</div>';
-  } else if (s.status === 'connected' && s.auth_type === 'oauth') {
-    actions = '<div class="srv-actions">' +
-      '<button class="btn btn-disconnect" onclick="event.stopPropagation();disconnectServer(\'' + esc(s.name) + '\')">Disconnect</button>' +
-      '</div>';
-  } else if (s.status === 'connected' && s.auth_type === 'bearer_env') {
-    actions = '<div class="srv-actions">' +
-      '<span class="key-saved">Key active</span>' +
-      '<button class="btn btn-disconnect" onclick="event.stopPropagation();removeKey(\'' + esc(s.name) + '\')">Remove Key</button>' +
-      '</div>';
-  }
+      /* Server Cards */
+      .servers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .srv-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--card-radius);
+        overflow: hidden;
+        transition: border-color 0.15s;
+      }
+      .srv-card:hover {
+        border-color: #484f58;
+      }
+      .srv-card-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .srv-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .srv-icon.github {
+        background: #21262d;
+      }
+      .srv-icon.database {
+        background: #1a2332;
+      }
+      .srv-icon.twitter {
+        background: #1c2128;
+      }
+      .srv-icon.server {
+        background: #1c2128;
+      }
+      .srv-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+      .srv-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .srv-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .srv-meta {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .srv-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+      }
+      .srv-status.connected {
+        background: #23883833;
+        color: var(--green);
+      }
+      .srv-status.pending {
+        background: #d2992233;
+        color: var(--yellow);
+      }
+      .srv-status.connecting {
+        background: #1f6feb22;
+        color: var(--accent);
+      }
+      .srv-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .srv-status.connected .srv-status-dot {
+        background: var(--green);
+      }
+      .srv-status.pending .srv-status-dot {
+        background: var(--yellow);
+      }
+      .srv-status.connecting .srv-status-dot {
+        background: var(--accent);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      .srv-tool-count {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .srv-actions {
+        display: flex;
+        gap: 8px;
+        padding: 0 20px 16px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-connect {
+        background: var(--accent);
+        color: #0d1117;
+      }
+      .btn-connect:hover {
+        background: #79c0ff;
+      }
+      .btn-refresh {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .btn-refresh:hover {
+        border-color: var(--muted);
+        color: var(--text);
+      }
+      .btn-disconnect {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .btn-disconnect:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .srv-tools {
+        border-top: 1px solid var(--border);
+        max-height: 350px;
+        overflow-y: auto;
+        display: none;
+      }
+      .srv-tools.open {
+        display: block;
+      }
+      .srv-tool-item {
+        padding: 8px 20px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .srv-tool-item:last-child {
+        border-bottom: none;
+      }
+      .srv-tool-item .tname {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .srv-tool-item .tbrief {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 1px;
+      }
+      .srv-tool-item .tcost {
+        font-size: 11px;
+        color: var(--muted);
+        font-family: "SF Mono", Consolas, monospace;
+        flex-shrink: 0;
+        margin-left: 12px;
+      }
+      .srv-empty {
+        padding: 20px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
 
-  return '<div class="srv-card" id="srv-' + esc(s.name) + '">' +
-    '<div class="srv-card-header" onclick="toggleServer(\'' + esc(s.name) + '\')">' +
-      '<div class="srv-icon ' + esc(s.icon) + '">' + icon + '</div>' +
-      '<div class="srv-info">' +
-        '<div class="srv-name">' + esc(s.name) + '</div>' +
-        '<div class="srv-meta">' +
-          '<span class="srv-status ' + statusClass + '"><span class="srv-status-dot"></span> ' + statusLabel + '</span>' +
-          (toolLabel ? '<span class="srv-tool-count">' + toolLabel + '</span>' : '') +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-    actions +
-    '<div class="srv-tools" id="srv-tools-' + esc(s.name) + '"></div>' +
-  '</div>';
-}
+      /* Key input */
+      .key-form {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        width: 100%;
+      }
+      .key-input {
+        flex: 1;
+        padding: 6px 10px;
+        font-size: 12px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        outline: none;
+        font-family: "SF Mono", Consolas, monospace;
+      }
+      .key-input:focus {
+        border-color: var(--accent);
+      }
+      .key-input::placeholder {
+        color: var(--muted);
+      }
+      .btn-save {
+        background: var(--green);
+        color: #0d1117;
+      }
+      .btn-save:hover {
+        background: #56d364;
+      }
+      .key-saved {
+        font-size: 11px;
+        color: var(--green);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
 
-async function toggleServer(name) {
-  const toolsEl = document.getElementById('srv-tools-' + name);
-  if (!toolsEl) return;
+      /* Tabs */
+      .tab-bar {
+        display: flex;
+        gap: 0;
+        margin-left: auto;
+      }
+      .tab-btn {
+        padding: 6px 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+        font-family: var(--font);
+      }
+      .tab-btn:hover {
+        color: var(--text);
+      }
+      .tab-btn.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
 
-  if (expandedServers.has(name)) {
-    toolsEl.classList.remove('open');
-    expandedServers.delete(name);
-    return;
-  }
+      /* Chat */
+      .chat-layout {
+        display: flex;
+        gap: 0;
+        height: calc(100vh - 80px);
+        overflow: hidden;
+      }
+      .chat-main {
+        flex: 7;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--border);
+      }
+      .chat-sidebar {
+        flex: 3;
+        padding: 20px;
+        overflow-y: auto;
+        background: var(--surface);
+      }
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .chat-input-bar {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+      .chat-input {
+        flex: 1;
+        padding: 10px 14px;
+        font-size: 14px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        outline: none;
+        resize: none;
+        min-height: 42px;
+        max-height: 120px;
+        font-family: var(--font);
+        line-height: 1.4;
+      }
+      .chat-input:focus {
+        border-color: var(--accent);
+      }
+      .chat-input::placeholder {
+        color: var(--muted);
+      }
+      .btn-send {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        background: var(--accent);
+        color: #0d1117;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+        white-space: nowrap;
+      }
+      .btn-send:hover {
+        background: #79c0ff;
+      }
+      .btn-send:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
 
-  expandedServers.add(name);
-  reloadServerTools(name, toolsEl);
-}
+      .msg {
+        max-width: 85%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.5;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+      }
+      .msg.user {
+        background: #1f6feb;
+        color: #fff;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+      }
+      .msg.assistant {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+        max-width: 100%;
+        width: 100%;
+      }
+      .msg.error {
+        background: #f8514922;
+        border: 1px solid var(--red);
+        color: var(--red);
+        align-self: flex-start;
+      }
+      .msg .steps-toggle {
+        font-size: 11px;
+        color: var(--accent);
+        cursor: pointer;
+        margin-top: 8px;
+        display: inline-block;
+      }
+      .msg .steps-detail {
+        display: none;
+        margin-top: 8px;
+        padding: 8px 10px;
+        background: var(--bg);
+        border-radius: 6px;
+        font-size: 12px;
+        font-family: "SF Mono", Consolas, monospace;
+        border: 1px solid var(--border);
+      }
+      .msg .steps-detail.open {
+        display: block;
+      }
+      .step-line {
+        padding: 3px 0;
+        color: var(--muted);
+      }
+      .step-line .step-action {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .step-line .step-tool {
+        color: var(--text);
+      }
+      .step-line .step-tok {
+        color: var(--yellow);
+      }
 
-async function reloadServerTools(name, toolsEl) {
-  toolsEl.innerHTML = '<div class="srv-empty">Loading...</div>';
-  toolsEl.classList.add('open');
+      /* Chat sidebar */
+      .sidebar-title {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      .acct-card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 12px;
+      }
+      .acct-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .acct-value {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .acct-value.red {
+        color: var(--red);
+      }
+      .acct-value.green {
+        color: var(--green);
+      }
+      .acct-value.accent {
+        color: var(--accent);
+      }
+      .acct-sub {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .acct-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 16px 0;
+      }
+      .steps-breakdown {
+        margin-top: 8px;
+      }
+      .steps-breakdown .sb-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .steps-breakdown .sb-row .sb-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .steps-breakdown .sb-row .sb-val {
+        font-family: "SF Mono", Consolas, monospace;
+        color: var(--text);
+      }
+      .sb-icon {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .sb-icon.search {
+        background: var(--accent);
+      }
+      .sb-icon.schema {
+        background: var(--yellow);
+      }
+      .sb-icon.exec {
+        background: var(--green);
+      }
+      .sb-icon.llm {
+        background: #bc8cff;
+      }
 
-  try {
-    const r = await fetch(API + '/api/tools?server=' + encodeURIComponent(name));
-    const tools = await r.json();
-    if (!tools.length) {
-      toolsEl.innerHTML = '<div class="srv-empty">No tools indexed for this server</div>';
-      return;
-    }
-    toolsEl.innerHTML = tools.map(t =>
-      '<div class="srv-tool-item">' +
-        '<div><div class="tname">' + esc(t.name) + '</div>' +
-          '<div class="tbrief">' + esc(t.brief) + '</div></div>' +
-        '<span class="tcost">' + t.token_cost + ' tok</span>' +
-      '</div>'
-    ).join('');
-  } catch (e) {
-    toolsEl.innerHTML = '<div class="srv-empty">Error loading tools</div>';
-  }
-}
+      .chat-welcome {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+      }
+      .chat-welcome h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+      .chat-welcome p {
+        font-size: 13px;
+        max-width: 400px;
+        margin: 0 auto 16px;
+      }
+      .chat-welcome .examples {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+      .chat-welcome .example-q {
+        padding: 8px 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: border-color 0.15s;
+        text-align: left;
+      }
+      .chat-welcome .example-q:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
 
-/* ---------- Key Management ---------- */
-async function submitKey(name) {
-  const input = document.getElementById('key-input-' + name);
-  if (!input) return;
-  const key = input.value.trim();
-  if (!key) return;
+      .thinking-indicator {
+        align-self: flex-start;
+        padding: 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        border-bottom-left-radius: 4px;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .thinking-indicator span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted);
+        animation: think 1.4s ease-in-out infinite;
+      }
+      .thinking-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .thinking-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes think {
+        0%,
+        100% {
+          opacity: 0.3;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>mcp-guardian</h1>
+      <span class="badge badge-scope" id="scope-badge">--</span>
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('dashboard')">
+          Dashboard
+        </button>
+        <button class="tab-btn" onclick="switchTab('chat')">Chat Demo</button>
+      </div>
+    </div>
 
-  saveKey(name, key);
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="card">
+            <div class="label">Tools in Scope</div>
+            <div class="value accent" id="stat-tools">--</div>
+            <div class="sub" id="stat-excluded">-- excluded by scope</div>
+          </div>
+          <div class="card">
+            <div class="label">In-Scope Tokens (without proxy)</div>
+            <div class="value" id="stat-inscope">--</div>
+            <div class="sub">all scoped tool schemas</div>
+          </div>
+          <div class="card">
+            <div class="label">In-Scope Tokens (with proxy)</div>
+            <div class="value green" id="stat-proxy">--</div>
+            <div class="sub">3 meta-tools only</div>
+          </div>
+          <div class="card">
+            <div class="label">Savings</div>
+            <div class="value green" id="stat-savings">--</div>
+            <div class="sub" id="stat-servers">-- servers</div>
+          </div>
+        </div>
 
-  try {
-    await fetch(API + '/api/servers/' + encodeURIComponent(name) + '/key', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: key })
-    });
-    expandedServers.add(name);
-    pollUntilConnected(name);
-  } catch (e) { console.error('Key submit error', e); }
-}
+        <div class="section-title" style="margin-bottom: 16px">
+          <span class="dot"></span> Upstream Servers
+        </div>
+        <div class="servers-grid" id="servers-grid">
+          <div class="empty-state">Loading servers...</div>
+        </div>
 
-async function removeKey(name) {
-  removeSavedKey(name);
-  try {
-    await fetch(API + '/api/servers/' + encodeURIComponent(name) + '/key', { method: 'DELETE' });
-    expandedServers.delete(name);
-    await loadServers();
-    await loadStats();
-  } catch (e) { console.error('Remove key error', e); }
-}
+        <div class="card search-section">
+          <div class="section-title"><span class="dot"></span> Tool Search</div>
+          <input
+            type="text"
+            class="search-box"
+            id="search-input"
+            placeholder="Search tools... (e.g. tables, issues, query)"
+          />
+          <div class="results" id="search-results">
+            <div class="empty-state">
+              Type a query to search available tools
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-let _restoredKeys = new Set();
-async function autoRestoreKey(name) {
-  if (_restoredKeys.has(name)) return;
-  _restoredKeys.add(name);
-  const key = getSavedKey(name);
-  if (!key) return;
-  try {
-    await fetch(API + '/api/servers/' + encodeURIComponent(name) + '/key', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: key })
-    });
-    setTimeout(() => { loadServers(); loadStats(); }, 2000);
-  } catch (e) { console.error('Auto-restore key error', e); }
-}
+    <div id="tab-chat" class="tab-content">
+      <div class="chat-layout">
+        <div class="chat-main">
+          <div class="chat-messages" id="chat-messages">
+            <div class="chat-welcome">
+              <h2>Chat Demo</h2>
+              <p>
+                Ask a question and watch mcp-guardian use progressive tool
+                discovery. Token costs are tracked in real time.
+              </p>
+              <div class="examples">
+                <div class="example-q" onclick="sendExample(this)">
+                  Show me the database tables
+                </div>
+                <div class="example-q" onclick="sendExample(this)">
+                  List open support tickets
+                </div>
+                <div class="example-q" onclick="sendExample(this)">
+                  Show me top trends in India
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <textarea
+              class="chat-input"
+              id="chat-input"
+              placeholder="Ask something..."
+              rows="1"
+              onkeydown="handleChatKey(event)"
+            ></textarea>
+            <button class="btn btn-send" id="btn-send" onclick="sendChat()">
+              Send
+            </button>
+          </div>
+        </div>
+        <div class="chat-sidebar">
+          <div class="sidebar-title">Token Accounting</div>
+          <div class="acct-card">
+            <div class="acct-label">Direct Cost (no proxy)</div>
+            <div class="acct-value red" id="acct-direct">--</div>
+            <div class="acct-sub">all tool schemas sent every call</div>
+          </div>
+          <div class="acct-card">
+            <div class="acct-label">This Conversation</div>
+            <div class="acct-value green" id="acct-conv">0</div>
+            <div class="acct-sub" id="acct-conv-sub">
+              tool + LLM tokens combined
+            </div>
+          </div>
+          <div class="acct-card">
+            <div class="acct-label">LLM Tokens</div>
+            <div class="acct-value accent" id="acct-llm">0</div>
+            <div class="acct-sub" id="acct-llm-detail">
+              input: 0 | output: 0
+            </div>
+          </div>
 
-/* ---------- OAuth ---------- */
-async function disconnectServer(name) {
-  try {
-    await fetch(API + '/api/servers/' + encodeURIComponent(name) + '/disconnect', { method: 'POST' });
-    expandedServers.delete(name);
-    await loadServers();
-    await loadStats();
-  } catch (e) { console.error('Disconnect error', e); }
-}
+          <hr class="acct-divider" />
+          <div class="sidebar-title">Conversation Steps</div>
+          <div class="steps-breakdown" id="acct-steps">
+            <div style="font-size: 12px; color: var(--muted)">
+              Send a message to see steps
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-async function connectServer(name) {
-  try {
-    await fetch(API + '/api/servers/' + encodeURIComponent(name) + '/connect', { method: 'POST' });
-    await loadServers();
-    loadStats();
-    pollUntilConnected(name);
-  } catch (e) { console.error('Connect error', e); }
-}
+    <script>
+      const API = "";
+      const LS_KEY_PREFIX = "guardian_key_";
 
-async function pollUntilConnected(name, attempts = 0) {
-  if (attempts > 30) return;
-  await new Promise(r => setTimeout(r, 2000));
-  try {
-    const r = await fetch(API + '/api/servers');
-    const servers = await r.json();
-    const srv = servers.find(s => s.name === name);
-    if (srv && srv.status === 'connected') {
-      expandedServers.add(name);
-      await loadServers();
-      await loadStats();
-      return;
-    }
-  } catch {}
-  pollUntilConnected(name, attempts + 1);
-}
+      const ICONS = {
+        github:
+          '<svg viewBox="0 0 24 24" fill="currentColor" color="#e6edf3"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>',
+        database:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4.03 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/></svg>',
+        twitter:
+          '<svg viewBox="0 0 24 24" fill="#e6edf3"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+        server:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>',
+      };
 
-async function refreshServer(name) {
-  expandedServers.add(name);
-  await loadServers();
-  await loadStats();
-}
+      function fmt(n) {
+        return n == null ? "--" : n.toLocaleString();
+      }
 
-/* ---------- Search ---------- */
-let searchTimeout;
-const searchInput = document.getElementById('search-input');
-const searchResults = document.getElementById('search-results');
+      function esc(s) {
+        if (!s) return "";
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
 
-searchInput.addEventListener('input', () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(doSearch, 200);
-});
+      /* ---------- localStorage key helpers ---------- */
+      function getSavedKey(name) {
+        try {
+          return localStorage.getItem(LS_KEY_PREFIX + name) || "";
+        } catch {
+          return "";
+        }
+      }
+      function saveKey(name, key) {
+        try {
+          localStorage.setItem(LS_KEY_PREFIX + name, key);
+        } catch {}
+      }
+      function removeSavedKey(name) {
+        try {
+          localStorage.removeItem(LS_KEY_PREFIX + name);
+        } catch {}
+      }
 
-let expandedTool = null;
+      /* ---------- Stats ---------- */
+      async function loadStats() {
+        try {
+          const r = await fetch(API + "/api/stats");
+          const d = await r.json();
+          document.getElementById("scope-badge").textContent =
+            "scope: " + d.scope;
+          document.getElementById("stat-tools").textContent = fmt(
+            d.tools_in_scope,
+          );
+          document.getElementById("stat-excluded").textContent =
+            fmt(d.tools_excluded) + " excluded by scope";
+          document.getElementById("stat-inscope").textContent = fmt(
+            d.in_scope_tokens,
+          );
+          document.getElementById("stat-proxy").textContent = fmt(
+            d.proxy_tokens,
+          );
+          document.getElementById("stat-savings").textContent =
+            d.savings_pct + "%";
+          document.getElementById("stat-servers").textContent =
+            d.servers.length + " server" + (d.servers.length !== 1 ? "s" : "");
+        } catch (e) {
+          console.error("Stats error", e);
+        }
+      }
 
-async function doSearch() {
-  const q = searchInput.value.trim();
-  if (!q) {
-    searchResults.innerHTML = '<div class="empty-state">Type a query to search available tools</div>';
-    return;
-  }
-  try {
-    const r = await fetch(API + '/api/search?q=' + encodeURIComponent(q));
-    const results = await r.json();
-    if (!results.length) {
-      searchResults.innerHTML = '<div class="empty-state">No tools matching "' + esc(q) + '"</div>';
-      return;
-    }
-    searchResults.innerHTML = results.map(r =>
-      '<div class="result-item" data-tool="' + esc(r.name) + '">' +
-        '<div><span class="name">' + esc(r.name) + '</span><span class="server-tag">' + esc(r.server) + '</span></div>' +
-        '<div class="brief">' + esc(r.brief) + '</div>' +
-        '<div class="schema-slot" id="schema-' + esc(r.name) + '"></div>' +
-      '</div>'
-    ).join('');
-    searchResults.querySelectorAll('.result-item').forEach(item => {
-      item.addEventListener('click', () => toggleSchema(item.dataset.tool));
-    });
-  } catch (e) { console.error('Search error', e); }
-}
+      /* ---------- Servers ---------- */
+      let expandedServers = new Set();
 
-async function toggleSchema(toolName) {
-  const slot = document.getElementById('schema-' + toolName);
-  if (!slot) return;
-  if (expandedTool === toolName) {
-    slot.innerHTML = '';
-    expandedTool = null;
-    return;
-  }
-  expandedTool = toolName;
-  slot.innerHTML = '<div class="schema-preview">Loading...</div>';
-  try {
-    const r = await fetch(API + '/api/schema/' + encodeURIComponent(toolName));
-    const schema = await r.json();
-    slot.innerHTML = '<div class="schema-preview">' + esc(JSON.stringify(schema, null, 2)) + '</div>';
-  } catch (e) {
-    slot.innerHTML = '<div class="schema-preview">Error loading schema</div>';
-  }
-}
+      async function loadServers() {
+        try {
+          const r = await fetch(API + "/api/servers");
+          const servers = await r.json();
+          const grid = document.getElementById("servers-grid");
+          if (!servers.length) {
+            grid.innerHTML =
+              '<div class="empty-state">No servers configured</div>';
+            return;
+          }
+          grid.innerHTML = servers.map((s) => renderServerCard(s)).join("");
 
-/* ---------- Init ---------- */
-loadStats();
-loadServers();
-</script>
-</body>
+          for (const s of servers) {
+            if (s.needs_key && getSavedKey(s.name)) {
+              autoRestoreKey(s.name);
+            }
+            if (s.status === "connected") {
+              expandedServers.add(s.name);
+            }
+          }
+
+          for (const name of expandedServers) {
+            const toolsEl = document.getElementById("srv-tools-" + name);
+            if (toolsEl) reloadServerTools(name, toolsEl);
+          }
+        } catch (e) {
+          console.error("Servers error", e);
+        }
+      }
+
+      function renderServerCard(s) {
+        const icon = ICONS[s.icon] || ICONS.server;
+        const statusClass = s.status;
+        const statusLabel =
+          s.status === "connected"
+            ? "Connected"
+            : s.status === "connecting"
+              ? "Connecting..."
+              : s.needs_key
+                ? "Needs API Key"
+                : "Pending OAuth";
+        const toolLabel =
+          s.status === "connected"
+            ? s.tool_count + " tool" + (s.tool_count !== 1 ? "s" : "")
+            : "";
+
+        let actions = "";
+
+        if (s.needs_key) {
+          const saved = getSavedKey(s.name);
+          actions =
+            '<div class="srv-actions">' +
+            '<div class="key-form">' +
+            '<input type="password" class="key-input" id="key-input-' +
+            esc(s.name) +
+            '" ' +
+            'placeholder="Paste API key..." value="' +
+            esc(saved) +
+            '">' +
+            '<button class="btn btn-save" onclick="event.stopPropagation();submitKey(\'' +
+            esc(s.name) +
+            "')\">Save</button>" +
+            "</div>" +
+            "</div>";
+        } else if (s.status === "pending" && s.auth_type === "oauth") {
+          actions =
+            '<div class="srv-actions">' +
+            '<button class="btn btn-connect" onclick="connectServer(\'' +
+            esc(s.name) +
+            "')\">Connect</button>" +
+            "</div>";
+        } else if (s.status === "connecting") {
+          actions =
+            '<div class="srv-actions">' +
+            '<button class="btn btn-connect" disabled>Connecting...</button>' +
+            '<button class="btn btn-refresh" onclick="refreshServer(\'' +
+            esc(s.name) +
+            "')\">Refresh</button>" +
+            "</div>";
+        } else if (s.status === "connected" && s.auth_type === "oauth") {
+          actions =
+            '<div class="srv-actions">' +
+            '<button class="btn btn-disconnect" onclick="event.stopPropagation();disconnectServer(\'' +
+            esc(s.name) +
+            "')\">Disconnect</button>" +
+            "</div>";
+        } else if (s.status === "connected" && s.auth_type === "bearer_env") {
+          actions =
+            '<div class="srv-actions">' +
+            '<span class="key-saved">Key active</span>' +
+            '<button class="btn btn-disconnect" onclick="event.stopPropagation();removeKey(\'' +
+            esc(s.name) +
+            "')\">Remove Key</button>" +
+            "</div>";
+        }
+
+        return (
+          '<div class="srv-card" id="srv-' +
+          esc(s.name) +
+          '">' +
+          '<div class="srv-card-header" onclick="toggleServer(\'' +
+          esc(s.name) +
+          "')\">" +
+          '<div class="srv-icon ' +
+          esc(s.icon) +
+          '">' +
+          icon +
+          "</div>" +
+          '<div class="srv-info">' +
+          '<div class="srv-name">' +
+          esc(s.name) +
+          "</div>" +
+          '<div class="srv-meta">' +
+          '<span class="srv-status ' +
+          statusClass +
+          '"><span class="srv-status-dot"></span> ' +
+          statusLabel +
+          "</span>" +
+          (toolLabel
+            ? '<span class="srv-tool-count">' + toolLabel + "</span>"
+            : "") +
+          "</div>" +
+          "</div>" +
+          "</div>" +
+          actions +
+          '<div class="srv-tools" id="srv-tools-' +
+          esc(s.name) +
+          '"></div>' +
+          "</div>"
+        );
+      }
+
+      async function toggleServer(name) {
+        const toolsEl = document.getElementById("srv-tools-" + name);
+        if (!toolsEl) return;
+
+        if (expandedServers.has(name)) {
+          toolsEl.classList.remove("open");
+          expandedServers.delete(name);
+          return;
+        }
+
+        expandedServers.add(name);
+        reloadServerTools(name, toolsEl);
+      }
+
+      async function reloadServerTools(name, toolsEl) {
+        toolsEl.innerHTML = '<div class="srv-empty">Loading...</div>';
+        toolsEl.classList.add("open");
+
+        try {
+          const r = await fetch(
+            API + "/api/tools?server=" + encodeURIComponent(name),
+          );
+          const tools = await r.json();
+          if (!tools.length) {
+            toolsEl.innerHTML =
+              '<div class="srv-empty">No tools indexed for this server</div>';
+            return;
+          }
+          toolsEl.innerHTML = tools
+            .map(
+              (t) =>
+                '<div class="srv-tool-item">' +
+                '<div><div class="tname">' +
+                esc(t.name) +
+                "</div>" +
+                '<div class="tbrief">' +
+                esc(t.brief) +
+                "</div></div>" +
+                '<span class="tcost">' +
+                t.token_cost +
+                " tok</span>" +
+                "</div>",
+            )
+            .join("");
+        } catch (e) {
+          toolsEl.innerHTML =
+            '<div class="srv-empty">Error loading tools</div>';
+        }
+      }
+
+      /* ---------- Key Management ---------- */
+      async function submitKey(name) {
+        const input = document.getElementById("key-input-" + name);
+        if (!input) return;
+        const key = input.value.trim();
+        if (!key) return;
+
+        saveKey(name, key);
+
+        try {
+          await fetch(
+            API + "/api/servers/" + encodeURIComponent(name) + "/key",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ key: key }),
+            },
+          );
+          expandedServers.add(name);
+          pollUntilConnected(name);
+        } catch (e) {
+          console.error("Key submit error", e);
+        }
+      }
+
+      async function removeKey(name) {
+        removeSavedKey(name);
+        try {
+          await fetch(
+            API + "/api/servers/" + encodeURIComponent(name) + "/key",
+            { method: "DELETE" },
+          );
+          expandedServers.delete(name);
+          await loadServers();
+          await loadStats();
+        } catch (e) {
+          console.error("Remove key error", e);
+        }
+      }
+
+      let _restoredKeys = new Set();
+      async function autoRestoreKey(name) {
+        if (_restoredKeys.has(name)) return;
+        _restoredKeys.add(name);
+        const key = getSavedKey(name);
+        if (!key) return;
+        try {
+          await fetch(
+            API + "/api/servers/" + encodeURIComponent(name) + "/key",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ key: key }),
+            },
+          );
+          setTimeout(() => {
+            loadServers();
+            loadStats();
+          }, 2000);
+        } catch (e) {
+          console.error("Auto-restore key error", e);
+        }
+      }
+
+      /* ---------- OAuth ---------- */
+      async function disconnectServer(name) {
+        try {
+          await fetch(
+            API + "/api/servers/" + encodeURIComponent(name) + "/disconnect",
+            { method: "POST" },
+          );
+          expandedServers.delete(name);
+          await loadServers();
+          await loadStats();
+        } catch (e) {
+          console.error("Disconnect error", e);
+        }
+      }
+
+      async function connectServer(name) {
+        try {
+          await fetch(
+            API + "/api/servers/" + encodeURIComponent(name) + "/connect",
+            { method: "POST" },
+          );
+          await loadServers();
+          loadStats();
+          pollUntilConnected(name);
+        } catch (e) {
+          console.error("Connect error", e);
+        }
+      }
+
+      async function pollUntilConnected(name, attempts = 0) {
+        if (attempts > 30) return;
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const r = await fetch(API + "/api/servers");
+          const servers = await r.json();
+          const srv = servers.find((s) => s.name === name);
+          if (srv && srv.status === "connected") {
+            expandedServers.add(name);
+            await loadServers();
+            await loadStats();
+            return;
+          }
+        } catch {}
+        pollUntilConnected(name, attempts + 1);
+      }
+
+      async function refreshServer(name) {
+        expandedServers.add(name);
+        await loadServers();
+        await loadStats();
+      }
+
+      /* ---------- Search ---------- */
+      let searchTimeout;
+      const searchInput = document.getElementById("search-input");
+      const searchResults = document.getElementById("search-results");
+
+      searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(doSearch, 200);
+      });
+
+      let expandedTool = null;
+
+      async function doSearch() {
+        const q = searchInput.value.trim();
+        if (!q) {
+          searchResults.innerHTML =
+            '<div class="empty-state">Type a query to search available tools</div>';
+          return;
+        }
+        try {
+          const r = await fetch(API + "/api/search?q=" + encodeURIComponent(q));
+          const results = await r.json();
+          if (!results.length) {
+            searchResults.innerHTML =
+              '<div class="empty-state">No tools matching "' +
+              esc(q) +
+              '"</div>';
+            return;
+          }
+          searchResults.innerHTML = results
+            .map(
+              (r) =>
+                '<div class="result-item" data-tool="' +
+                esc(r.name) +
+                '">' +
+                '<div><span class="name">' +
+                esc(r.name) +
+                '</span><span class="server-tag">' +
+                esc(r.server) +
+                "</span></div>" +
+                '<div class="brief">' +
+                esc(r.brief) +
+                "</div>" +
+                '<div class="schema-slot" id="schema-' +
+                esc(r.name) +
+                '"></div>' +
+                "</div>",
+            )
+            .join("");
+          searchResults.querySelectorAll(".result-item").forEach((item) => {
+            item.addEventListener("click", () =>
+              toggleSchema(item.dataset.tool),
+            );
+          });
+        } catch (e) {
+          console.error("Search error", e);
+        }
+      }
+
+      async function toggleSchema(toolName) {
+        const slot = document.getElementById("schema-" + toolName);
+        if (!slot) return;
+        if (expandedTool === toolName) {
+          slot.innerHTML = "";
+          expandedTool = null;
+          return;
+        }
+        expandedTool = toolName;
+        slot.innerHTML = '<div class="schema-preview">Loading...</div>';
+        try {
+          const r = await fetch(
+            API + "/api/schema/" + encodeURIComponent(toolName),
+          );
+          const schema = await r.json();
+          slot.innerHTML =
+            '<div class="schema-preview">' +
+            esc(JSON.stringify(schema, null, 2)) +
+            "</div>";
+        } catch (e) {
+          slot.innerHTML =
+            '<div class="schema-preview">Error loading schema</div>';
+        }
+      }
+
+      /* ---------- Tabs ---------- */
+      function switchTab(tabId) {
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((el) => el.classList.remove("active"));
+        document.getElementById("tab-" + tabId).classList.add("active");
+        document.querySelectorAll(".tab-btn").forEach((el) => {
+          if (el.textContent.toLowerCase().replace(/\s+/g, "").includes(tabId))
+            el.classList.add("active");
+        });
+        if (tabId === "chat") {
+          const input = document.getElementById("chat-input");
+          if (input) setTimeout(() => input.focus(), 100);
+        }
+      }
+
+      /* ---------- Chat ---------- */
+      let chatHistory = [];
+      let cumulativeToolTokens = 0;
+      let cumulativeLLMInput = 0;
+      let cumulativeLLMOutput = 0;
+      let allSteps = [];
+      let chatBusy = false;
+
+      function handleChatKey(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendChat();
+        }
+      }
+
+      function sendExample(el) {
+        const input = document.getElementById("chat-input");
+        input.value = el.textContent;
+        sendChat();
+      }
+
+      async function sendChat() {
+        const input = document.getElementById("chat-input");
+        const msg = input.value.trim();
+        if (!msg || chatBusy) return;
+
+        chatBusy = true;
+        document.getElementById("btn-send").disabled = true;
+        input.value = "";
+
+        const messagesEl = document.getElementById("chat-messages");
+        const welcome = messagesEl.querySelector(".chat-welcome");
+        if (welcome) welcome.remove();
+
+        appendMsg("user", msg);
+        chatHistory.push({ role: "user", content: msg });
+
+        const statusEl = document.createElement("div");
+        statusEl.className = "msg assistant";
+        statusEl.style.maxWidth = "100%";
+        statusEl.style.width = "100%";
+        const statusSteps = document.createElement("div");
+        statusSteps.style.cssText =
+          'font-size:12px;color:var(--muted);font-family:"SF Mono",Consolas,monospace';
+        statusSteps.innerHTML =
+          '<span style="color:var(--accent)">Thinking...</span>';
+        statusEl.appendChild(statusSteps);
+        messagesEl.appendChild(statusEl);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+
+        const streamSteps = [];
+
+        try {
+          const r = await fetch(API + "/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: msg,
+              history: chatHistory.slice(0, -1),
+            }),
+          });
+
+          const reader = r.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split("\n");
+            buffer = lines.pop();
+
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              let evt;
+              try {
+                evt = JSON.parse(line.slice(6));
+              } catch {
+                continue;
+              }
+
+              if (evt.type === "step") {
+                streamSteps.push(evt.step);
+                cumulativeToolTokens += evt.step.tokens;
+                allSteps.push(evt.step);
+
+                statusSteps.innerHTML =
+                  streamSteps
+                    .map(
+                      (s) =>
+                        '<div style="padding:2px 0">' +
+                        '<span style="color:var(--accent)">' +
+                        esc(s.action) +
+                        "</span> " +
+                        (s.tool
+                          ? '<span style="color:var(--text)">' +
+                            esc(s.tool) +
+                            "</span> "
+                          : "") +
+                        '<span style="color:var(--yellow)">' +
+                        s.tokens +
+                        " tok</span>" +
+                        (s.duration_ms != null
+                          ? ' <span style="color:var(--muted)">' +
+                            s.duration_ms +
+                            "ms</span>"
+                          : "") +
+                        "</div>",
+                    )
+                    .join("") +
+                  '<div style="margin-top:4px"><span style="color:var(--accent)">Thinking...</span></div>';
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+                updateTokenSidebar({
+                  direct_cost: 0,
+                  tool_tokens: 0,
+                  llm_input_tokens: 0,
+                  llm_output_tokens: 0,
+                });
+              } else if (evt.type === "reply") {
+                statusEl.remove();
+                appendMsg("assistant", evt.reply, evt.steps);
+                chatHistory.push({ role: "assistant", content: evt.reply });
+
+                const acct = evt.token_accounting;
+                cumulativeLLMInput += acct.llm_input_tokens;
+                cumulativeLLMOutput += acct.llm_output_tokens;
+                updateTokenSidebar(acct);
+              } else if (evt.type === "error") {
+                statusEl.remove();
+                appendMsg("error", evt.error);
+              }
+            }
+          }
+        } catch (e) {
+          statusEl.remove();
+          appendMsg("error", "Failed to reach chat API: " + e.message);
+        }
+
+        chatBusy = false;
+        document.getElementById("btn-send").disabled = false;
+        input.focus();
+      }
+
+      function appendMsg(role, text, steps) {
+        const messagesEl = document.getElementById("chat-messages");
+        const el = document.createElement("div");
+        el.className = "msg " + role;
+        el.textContent = text;
+
+        if (steps && steps.length > 0) {
+          const toggle = document.createElement("span");
+          toggle.className = "steps-toggle";
+          toggle.textContent =
+            "\u25B6 " + steps.length + " step" + (steps.length > 1 ? "s" : "");
+
+          const detail = document.createElement("div");
+          detail.className = "steps-detail";
+          detail.innerHTML = steps
+            .map(
+              (s) =>
+                '<div class="step-line">' +
+                '<span class="step-action">' +
+                esc(s.action) +
+                "</span> " +
+                (s.tool
+                  ? '<span class="step-tool">' + esc(s.tool) + "</span> "
+                  : "") +
+                '<span class="step-tok">' +
+                s.tokens +
+                " tok</span>" +
+                (s.duration_ms != null
+                  ? ' <span style="color:var(--muted)">' +
+                    s.duration_ms +
+                    "ms</span>"
+                  : "") +
+                "</div>",
+            )
+            .join("");
+
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            detail.classList.toggle("open");
+            toggle.textContent =
+              (detail.classList.contains("open") ? "\u25BC " : "\u25B6 ") +
+              steps.length +
+              " step" +
+              (steps.length > 1 ? "s" : "");
+          });
+
+          el.appendChild(toggle);
+          el.appendChild(detail);
+        }
+
+        messagesEl.appendChild(el);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function updateTokenSidebar(acct) {
+        document.getElementById("acct-direct").textContent = fmt(
+          acct.direct_cost,
+        );
+
+        const totalConv =
+          cumulativeToolTokens + cumulativeLLMInput + cumulativeLLMOutput;
+        document.getElementById("acct-conv").textContent = fmt(totalConv);
+        document.getElementById("acct-conv-sub").textContent =
+          "tool: " +
+          fmt(cumulativeToolTokens) +
+          " | LLM: " +
+          fmt(cumulativeLLMInput + cumulativeLLMOutput);
+
+        document.getElementById("acct-llm").textContent = fmt(
+          cumulativeLLMInput + cumulativeLLMOutput,
+        );
+        document.getElementById("acct-llm-detail").textContent =
+          "input: " +
+          fmt(cumulativeLLMInput) +
+          " | output: " +
+          fmt(cumulativeLLMOutput);
+
+        const stepsEl = document.getElementById("acct-steps");
+        if (allSteps.length === 0) {
+          stepsEl.innerHTML =
+            '<div style="font-size:12px;color:var(--muted)">Send a message to see steps</div>';
+          return;
+        }
+
+        const iconMap = {
+          search_tools: "search",
+          get_schema: "schema",
+          execute_tool: "exec",
+        };
+        stepsEl.innerHTML = allSteps
+          .map(
+            (s, i) =>
+              '<div class="sb-row">' +
+              '<span class="sb-label"><span class="sb-icon ' +
+              (iconMap[s.action] || "llm") +
+              '"></span> ' +
+              "#" +
+              (i + 1) +
+              " " +
+              esc(s.action) +
+              (s.tool ? " → " + esc(s.tool) : "") +
+              "</span>" +
+              '<span class="sb-val">' +
+              s.tokens +
+              " tok</span>" +
+              "</div>",
+          )
+          .join("");
+      }
+
+      /* ---------- Init ---------- */
+      loadStats();
+      loadServers();
+    </script>
+  </body>
 </html>
