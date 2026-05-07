@@ -10,28 +10,46 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _patch_oauth_token_status() -> None:
-    """Accept any 2xx status from the OAuth token endpoint.
+def _patch_oauth_token_response() -> None:
+    """Fix two issues in the MCP SDK's token response handling:
 
-    The MCP SDK's ``_handle_token_response`` rejects anything that
-    isn't exactly HTTP 200.  Some OAuth providers (e.g. TrueFoundry)
-    return 201 Created — a perfectly valid success response.  This
-    patch relaxes the check to accept the full 2xx range.
+    1. Accept any 2xx status (not just 200). Some providers like
+       TrueFoundry return 201 Created.
+    2. Handle form-encoded responses (``application/x-www-form-urlencoded``)
+       from providers like GitHub that return ``access_token=...&token_type=bearer``
+       instead of JSON.
     """
     try:
         from mcp.client.auth.oauth2 import OAuthClientProvider
     except ImportError:
         return
 
-    _original = OAuthClientProvider._handle_token_response
+    async def _patched_handle(self, response):  # type: ignore[override]
+        from urllib.parse import parse_qs
 
-    async def _lenient_handle(self, response):  # type: ignore[override]
-        if 200 <= response.status_code < 300:
-            response.status_code = 200
-        return await _original(self, response)
+        from mcp.shared.auth import OAuthToken
 
-    OAuthClientProvider._handle_token_response = _lenient_handle  # type: ignore[assignment]
-    logger.debug("Patched OAuthClientProvider._handle_token_response to accept 2xx")
+        if not (200 <= response.status_code < 300):
+            from mcp.client.auth.exceptions import OAuthTokenError
+
+            raise OAuthTokenError(f"Token request failed: {response.status_code}")
+
+        content = await response.aread()
+        body = content.decode() if isinstance(content, bytes) else content
+
+        if body and not body.lstrip().startswith("{"):
+            parsed = parse_qs(body)
+            token_data = {k: v[0] for k, v in parsed.items()}
+            token = OAuthToken.model_validate(token_data)
+        else:
+            token = OAuthToken.model_validate_json(content)
+
+        self.context.current_tokens = token
+        self.context.update_token_expiry(token)
+        await self.context.storage.set_tokens(token)
+
+    OAuthClientProvider._handle_token_response = _patched_handle  # type: ignore[assignment]
+    logger.debug("Patched _handle_token_response for 2xx + form-encoded support")
 
 
 def _suppress_oauth_token_logging() -> None:
@@ -42,5 +60,5 @@ def _suppress_oauth_token_logging() -> None:
 
 def apply_patches() -> None:
     """Apply all compatibility patches."""
-    _patch_oauth_token_status()
+    _patch_oauth_token_response()
     _suppress_oauth_token_logging()

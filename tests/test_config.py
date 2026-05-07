@@ -58,9 +58,9 @@ def test_valid_config_loads(config_dir: Path) -> None:
 def test_loads_real_example_config() -> None:
     """examples/scope.direct.yaml loads successfully."""
     config = load_config("examples/scope.direct.yaml", "support-agent")
-    assert set(config.upstream_servers.keys()) == {"github-oauth", "postgres", "trends"}
+    assert set(config.upstream_servers.keys()) == {"github", "postgres", "trends"}
     assert config.active_scope == "support-agent"
-    assert "github-oauth" in config.scopes["support-agent"].servers
+    assert "github" in config.scopes["support-agent"].servers
     assert "postgres" in config.scopes["support-agent"].servers
     assert "trends" in config.scopes["support-agent"].servers
 

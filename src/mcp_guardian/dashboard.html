@@ -212,6 +212,9 @@ async function loadServers() {
       if (s.needs_key && getSavedKey(s.name)) {
         autoRestoreKey(s.name);
       }
+      if (s.status === 'connected') {
+        expandedServers.add(s.name);
+      }
     }
 
     for (const name of expandedServers) {
@@ -329,8 +332,8 @@ async function submitKey(name) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key: key })
     });
-    await loadServers();
-    loadStats();
+    expandedServers.add(name);
+    pollUntilConnected(name);
   } catch (e) { console.error('Key submit error', e); }
 }
 
@@ -375,7 +378,25 @@ async function connectServer(name) {
     await fetch(API + '/api/servers/' + encodeURIComponent(name) + '/connect', { method: 'POST' });
     await loadServers();
     loadStats();
+    pollUntilConnected(name);
   } catch (e) { console.error('Connect error', e); }
+}
+
+async function pollUntilConnected(name, attempts = 0) {
+  if (attempts > 30) return;
+  await new Promise(r => setTimeout(r, 2000));
+  try {
+    const r = await fetch(API + '/api/servers');
+    const servers = await r.json();
+    const srv = servers.find(s => s.name === name);
+    if (srv && srv.status === 'connected') {
+      expandedServers.add(name);
+      await loadServers();
+      await loadStats();
+      return;
+    }
+  } catch {}
+  pollUntilConnected(name, attempts + 1);
 }
 
 async function refreshServer(name) {

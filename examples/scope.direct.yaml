@@ -5,18 +5,13 @@
 # Usage: cp examples/scope.direct.yaml scope.yaml
 
 upstream_servers:
-  # github:
-  #   url: https://api.githubcopilot.com/mcp/
-  #   transport: auto
-  #   auth:
-  #     type: bearer_env
-  #     value_env: GITHUB_TOKEN # Optional — can also enter via dashboard
-
-  github-oauth:
-    url: https://gateway.truefoundry.ai/tfy-eo/mcp/github-mcp/server
+  github:
+    url: https://api.githubcopilot.com/mcp/
     transport: auto
     auth:
       type: oauth # Browser-based OAuth (fastmcp handles the flow)
+      client_id: Iv******
+      client_secret_env: GITHUB_OAUTH_SECRET # reads from env
 
   postgres:
     url_env: POSTGRES_MCP_URL # Full URL from env (has credentials)
@@ -35,16 +30,7 @@ scopes:
   support-agent:
     description: "Read-only tools for support agents"
     servers:
-      # github:
-      #   allowed_tools:
-      #     - get_me
-      #     - list_issues
-      #     - issue_read
-      #     - list_pull_requests
-      #     - pull_request_read
-      #     - search_issues
-      #     - search_code
-      github-oauth:
+      github:
         allowed_tools:
           - get_me
           - list_issues
@@ -63,18 +49,13 @@ scopes:
           - pg_explain
           - pg_table_stats
       trends:
-        allowed_tools: "*"
+        allowed_tools:
+          - trendsMCP___get_top_trends
 
   developer:
     description: "Full access minus destructive operations"
     servers:
-      # github:
-      #   allowed_tools: "*"
-      #   blocked_tools:
-      #     - delete_file
-      #     - fork_repository
-      #     - push_files
-      github-oauth:
+      github:
         allowed_tools: "*"
         blocked_tools:
           - delete_file
@@ -88,7 +69,10 @@ scopes:
           - pg_truncate
           - pg_terminate_backend
       trends:
-        allowed_tools: "*"
+        allowed_tools:
+          - trendsMCP___get_top_trends
+          - trendsMCP___get_trends
+          - trendsMCP___get_growth
 
 audit:
   enabled: true

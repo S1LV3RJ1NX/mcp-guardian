@@ -102,11 +102,33 @@ class UpstreamManager:
 
             server = self._get_server(name)
             url = server.get_url()
-            client = FastMCPClient(url, auth="oauth")
+            auth = self._build_oauth_provider(server)
+            client = FastMCPClient(url, auth=auth)
             await client.__aenter__()
             self._oauth_clients[name] = client
             logger.info("Persistent OAuth client created for '%s'", name)
         return self._oauth_clients[name]
+
+    def _build_oauth_provider(self, server: ServerConfig) -> str | object:
+        """Build an OAuth auth provider, using static credentials when configured."""
+        if not server.auth.client_id:
+            return "oauth"
+
+        from fastmcp.client.auth.oauth import OAuth
+
+        client_secret: str | None = None
+        if server.auth.client_secret_env:
+            from mcp_guardian.settings import get_env_var
+
+            try:
+                client_secret = get_env_var(server.auth.client_secret_env)
+            except Exception:
+                logger.debug("client_secret_env '%s' not set", server.auth.client_secret_env)
+
+        return OAuth(
+            client_id=server.auth.client_id,
+            client_secret=client_secret,
+        )
 
     async def disconnect_oauth(self, name: str) -> bool:
         """Disconnect and discard the cached OAuth client for a server.
@@ -122,6 +144,14 @@ class UpstreamManager:
             logger.debug("Error during OAuth client disconnect for '%s'", name, exc_info=True)
         logger.info("OAuth client disconnected for '%s'", name)
         return True
+
+    async def shutdown(self) -> None:
+        """Close all cached OAuth clients. Safe to call multiple times."""
+        names = list(self._oauth_clients.keys())
+        for name in names:
+            await self.disconnect_oauth(name)
+        if names:
+            logger.info("All upstream OAuth clients closed")
 
     async def list_tools(self, name: str, *, interactive: bool = True) -> list[Tool]:
         """Connect to a server, list its tools, and disconnect.

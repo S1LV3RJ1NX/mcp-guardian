@@ -339,6 +339,39 @@ A: Yes — to mcp-guardian, an upstream MCP server is just a URL. You could chai
 **Q: What about per-user OAuth?**
 A: Use `token_passthrough` auth — the proxy forwards whatever `Authorization` header the client sends to upstream. The actual OAuth flow happens in a gateway in front of the proxy.
 
+**Q: When would I need an MCP gateway like TrueFoundry?**
+A: Three situations:
+
+1. **The MCP server doesn't support OAuth discovery.** The MCP spec expects servers to expose `/.well-known/oauth-authorization-server` metadata (RFC 8414). Many servers — Slack, Notion, Jira, internal tools — give you a pre-registered client ID + secret instead. A gateway sits in front, serves the discovery metadata, and handles the token exchange so `type: oauth` just works in your `scope.yaml`.
+
+2. **You need user isolation.** With `bearer_env`, every user shares the same PAT. With a gateway, each user gets their own OAuth session — the gateway maps the MCP OAuth flow to the upstream provider's OAuth, so users authenticate with their own GitHub/Slack/etc. identity. Audit logs then show *who* did what.
+
+3. **You want centralized credential management.** Instead of distributing API keys to every proxy instance, the gateway holds the client secrets. Your `scope.yaml` stays clean (`type: oauth`, no secrets), and rotating credentials happens in one place.
+
+If the MCP server already supports OAuth discovery and you don't need per-user isolation, you don't need a gateway — `type: oauth` connects directly.
+
+**Q: What OAuth modes does mcp-guardian support?**
+A: It depends on what the upstream MCP server supports. Here's the decision matrix:
+
+| Server supports | scope.yaml config | What happens |
+|---|---|---|
+| Dynamic client registration (RFC 7591) + `/.well-known` | `type: oauth` | Fully automatic — `fastmcp` discovers endpoints and registers a client on the fly |
+| `/.well-known` but NO dynamic registration | `type: oauth` + `client_id` (+ optional `client_secret_env`) | Skips registration, uses your pre-registered credentials. Auth/token URLs still discovered automatically |
+| Neither `/.well-known` nor dynamic registration (raw OAuth2 like GitHub, Slack, Notion) | Use a gateway (e.g. TrueFoundry) | Gateway serves `/.well-known` metadata and handles the OAuth flow. Your config stays `type: oauth` |
+| No OAuth at all, just API keys / PATs | `type: bearer_env` | Token from env var, dashboard, or client header — no OAuth involved |
+
+Example — pre-registered client (no gateway needed):
+```yaml
+my-server:
+  url: https://mcp.example.com/mcp
+  auth:
+    type: oauth
+    client_id: "abc123"
+    client_secret_env: MY_SERVER_SECRET  # optional, for confidential clients
+```
+
+`fastmcp` will discover `authorization_url` and `token_url` from `/.well-known/oauth-authorization-server` at the server URL, then run the browser-based OAuth flow using your `client_id`. No need to specify auth/token URLs manually.
+
 ## Related Docs
 
 - [QUICKSTART.md](QUICKSTART.md) — 5-minute setup guide

@@ -20,6 +20,8 @@ class ServerAuth:
     type: str
     header: str = "Authorization"
     value_env: str = ""
+    client_id: str = ""
+    client_secret_env: str = ""
 
 
 @dataclass
@@ -98,6 +100,8 @@ def _parse_auth(raw: dict | None) -> ServerAuth:
         type=auth_type,
         header=raw.get("header", "Authorization"),
         value_env=raw.get("value_env", ""),
+        client_id=raw.get("client_id", ""),
+        client_secret_env=raw.get("client_secret_env", ""),
     )
 
 

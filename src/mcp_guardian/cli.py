@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 
 from mcp_guardian.settings import get_settings
 
@@ -50,8 +51,16 @@ def main() -> None:
     from mcp_guardian.proxy import Guardian
 
     guardian = Guardian(config_path=settings.config_path, scope=settings.scope)
-    guardian.run(
-        transport=settings.transport,
-        host=settings.host,
-        port=settings.port,
-    )
+
+    try:
+        guardian.run(
+            transport=settings.transport,
+            host=settings.host,
+            port=settings.port,
+        )
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print("\n[mcp-guardian] Shutting down...")  # noqa: T201
+        asyncio.run(guardian.upstream.shutdown())
+        print("[mcp-guardian] Goodbye.")  # noqa: T201
