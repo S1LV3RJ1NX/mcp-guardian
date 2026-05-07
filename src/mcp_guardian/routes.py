@@ -43,6 +43,17 @@ def register_dashboard_routes(guardian: Guardian) -> None:
             _html_cache["html"] = html_path.read_text()
         return HTMLResponse(_html_cache["html"])
 
+    @server.custom_route("/presentation", methods=["GET"])
+    async def presentation_page(request: Request) -> HTMLResponse:
+        if "presentation" not in _html_cache:
+            pres_path = Path(__file__).parent / "../../docs/presentation.html"
+            pres_path = pres_path.resolve()
+            if pres_path.exists():
+                _html_cache["presentation"] = pres_path.read_text()
+            else:
+                return HTMLResponse("<h1>Presentation not found</h1>", status_code=404)
+        return HTMLResponse(_html_cache["presentation"])
+
     @server.custom_route("/api/stats", methods=["GET"])
     async def api_stats(request: Request) -> JSONResponse:
         from mcp_guardian.tokens import savings_report

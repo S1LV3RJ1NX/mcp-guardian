@@ -1,0 +1,2499 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content="html-slides v0.9.4" />
+    <title>Putting MCP on a Diet — Prathamesh Saraf</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <style>
+      /* ===========================================
+           CSS CUSTOM PROPERTIES — Claude-inspired warm cream
+           =========================================== */
+      :root {
+        --bg: #faf6f1;
+        --bg-warm: #f5ede4;
+        --bg-card: #ffffff;
+        --text: #1a1612;
+        --text-secondary: #6b5e53;
+        --text-muted: #9c8e82;
+        --accent: #d97706;
+        --accent-warm: #c2410c;
+        --accent-green: #059669;
+        --accent-red: #dc2626;
+        --accent-blue: #2563eb;
+        --border: rgba(26, 22, 18, 0.1);
+        --border-sketch: rgba(26, 22, 18, 0.25);
+
+        --font-display: "Instrument Serif", Georgia, serif;
+        --font-body: "DM Sans", system-ui, sans-serif;
+        --font-mono: "JetBrains Mono", monospace;
+
+        --title-size: clamp(2.5rem, 7vw, 5.5rem);
+        --h2-size: clamp(1.8rem, 5vw, 3.5rem);
+        --h3-size: clamp(1.3rem, 3vw, 2rem);
+        --body-size: clamp(1rem, 1.8vw, 1.35rem);
+        --small-size: clamp(0.85rem, 1.3vw, 1.05rem);
+        --code-size: clamp(0.8rem, 1.2vw, 1rem);
+
+        --slide-padding: clamp(1.5rem, 5vw, 5rem);
+        --content-gap: clamp(0.75rem, 2vw, 2rem);
+        --element-gap: clamp(0.3rem, 1vw, 1rem);
+
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --duration-normal: 0.6s;
+      }
+
+      /* ===========================================
+           MANDATORY VIEWPORT BASE STYLES
+           =========================================== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+      }
+
+      .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding);
+      }
+
+      .card,
+      .container,
+      .content-box {
+        max-width: min(90vw, 1000px);
+        max-height: min(80vh, 700px);
+      }
+
+      .feature-list,
+      .bullet-list {
+        gap: clamp(0.4rem, 1vh, 1rem);
+      }
+      .feature-list li,
+      .bullet-list li {
+        font-size: var(--body-size);
+        line-height: 1.4;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: clamp(0.5rem, 1.5vw, 1rem);
+      }
+
+      img,
+      .image-container {
+        max-width: 100%;
+        max-height: min(50vh, 400px);
+        object-fit: contain;
+      }
+
+      @media (max-height: 700px) {
+        :root {
+          --slide-padding: clamp(0.75rem, 3vw, 2rem);
+          --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+          --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+          --h2-size: clamp(1rem, 3vw, 1.75rem);
+        }
+      }
+      @media (max-height: 600px) {
+        :root {
+          --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+          --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+          --title-size: clamp(1.1rem, 4vw, 2rem);
+          --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+        }
+        .nav-dots,
+        .keyboard-hint,
+        .decorative {
+          display: none;
+        }
+      }
+      @media (max-height: 500px) {
+        :root {
+          --slide-padding: clamp(0.4rem, 2vw, 1rem);
+          --title-size: clamp(1rem, 3.5vw, 1.5rem);
+          --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+          --body-size: clamp(0.65rem, 1vw, 0.85rem);
+        }
+      }
+      @media (max-width: 600px) {
+        :root {
+          --title-size: clamp(1.25rem, 7vw, 2.5rem);
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.2s !important;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* ===========================================
+           THEME — Claude warm cream aesthetic
+           =========================================== */
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-body);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .slide {
+        background: var(--bg);
+      }
+
+      /* ===========================================
+           TYPOGRAPHY
+           =========================================== */
+      h1 {
+        font-family: var(--font-display);
+        font-size: var(--title-size);
+        font-weight: 400;
+        line-height: 1.15;
+        color: var(--text);
+        letter-spacing: -0.01em;
+      }
+
+      h2 {
+        font-family: var(--font-display);
+        font-size: var(--h2-size);
+        font-weight: 400;
+        line-height: 1.15;
+        color: var(--text);
+      }
+
+      h3 {
+        font-family: var(--font-body);
+        font-size: var(--h3-size);
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      p,
+      li {
+        font-size: var(--body-size);
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+
+      .accent {
+        color: var(--accent);
+      }
+      .accent-green {
+        color: var(--accent-green);
+      }
+      .accent-red {
+        color: var(--accent-red);
+      }
+
+      code {
+        font-family: var(--font-mono);
+        font-size: var(--code-size);
+        background: var(--bg-warm);
+        padding: 0.15em 0.4em;
+        border-radius: 4px;
+        color: var(--accent-warm);
+      }
+
+      /* ===========================================
+           REVEAL ANIMATIONS
+           =========================================== */
+      .reveal {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+          opacity var(--duration-normal) var(--ease-out-expo),
+          transform var(--duration-normal) var(--ease-out-expo);
+      }
+      .slide.active .reveal {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .slide.active .reveal:nth-child(1) {
+        transition-delay: 0.05s;
+      }
+      .slide.active .reveal:nth-child(2) {
+        transition-delay: 0.15s;
+      }
+      .slide.active .reveal:nth-child(3) {
+        transition-delay: 0.25s;
+      }
+      .slide.active .reveal:nth-child(4) {
+        transition-delay: 0.35s;
+      }
+      .slide.active .reveal:nth-child(5) {
+        transition-delay: 0.45s;
+      }
+      .slide.active .reveal:nth-child(6) {
+        transition-delay: 0.55s;
+      }
+
+      /* ===========================================
+           EXCALIDRAW-STYLE SKETCH CARDS
+           =========================================== */
+      .sketch-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border-sketch);
+        border-radius: 8px;
+        padding: clamp(0.8rem, 2vw, 1.5rem);
+        box-shadow: 3px 3px 0px var(--border-sketch);
+        position: relative;
+      }
+      .sketch-card::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border: 2px solid var(--border-sketch);
+        border-radius: 10px;
+        transform: rotate(-0.3deg);
+        pointer-events: none;
+        opacity: 0.3;
+      }
+      .sketch-card h3 {
+        font-family: var(--font-display);
+        font-size: clamp(1rem, 2vw, 1.4rem);
+        margin-bottom: clamp(0.3rem, 0.8vw, 0.5rem);
+        color: var(--accent);
+      }
+      .sketch-card p {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+      }
+
+      /* ===========================================
+           LAYOUT HELPERS
+           =========================================== */
+      .centered {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(1rem, 3vw, 3rem);
+        align-items: center;
+      }
+      @media (max-width: 768px) {
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .three-col {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(0.5rem, 1.5vw, 1.5rem);
+      }
+      @media (max-width: 768px) {
+        .three-col {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .five-col {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: clamp(0.3rem, 1vw, 0.8rem);
+      }
+      @media (max-width: 900px) {
+        .five-col {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      @media (max-width: 600px) {
+        .five-col {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .gap-sm {
+        gap: var(--element-gap);
+      }
+      .gap-md {
+        gap: var(--content-gap);
+      }
+      .mt-sm {
+        margin-top: var(--element-gap);
+      }
+      .mt-md {
+        margin-top: var(--content-gap);
+      }
+      .mb-sm {
+        margin-bottom: var(--element-gap);
+      }
+
+      /* ===========================================
+           BIG STAT / HERO NUMBER
+           =========================================== */
+      .big-stat {
+        font-family: var(--font-display);
+        font-size: clamp(3.5rem, 12vw, 9rem);
+        font-weight: 400;
+        color: var(--accent);
+        line-height: 1;
+        letter-spacing: -0.03em;
+      }
+      .big-stat-label {
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        color: var(--text-muted);
+        margin-top: clamp(0.3rem, 0.8vw, 0.5rem);
+      }
+
+      /* ===========================================
+           CODE BLOCK
+           =========================================== */
+      .code-block {
+        background: #1e1b18;
+        color: #e8e0d8;
+        border-radius: 10px;
+        padding: clamp(0.8rem, 2vw, 1.5rem);
+        font-family: var(--font-mono);
+        font-size: var(--code-size);
+        line-height: 1.7;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        white-space: pre;
+        text-align: left;
+      }
+      .code-block .keyword {
+        color: #d97706;
+      }
+      .code-block .string {
+        color: #059669;
+      }
+      .code-block .comment {
+        color: #6b5e53;
+      }
+      .code-block .key {
+        color: #2563eb;
+      }
+
+      /* ===========================================
+           ARCHITECTURE DIAGRAM (CSS-drawn Excalidraw style)
+           =========================================== */
+      .arch-box {
+        border: 2px solid var(--border-sketch);
+        border-radius: 6px;
+        padding: clamp(0.5rem, 1.5vw, 1rem);
+        text-align: center;
+        background: var(--bg-card);
+        box-shadow: 2px 2px 0px var(--border-sketch);
+        position: relative;
+        font-size: var(--small-size);
+        font-weight: 500;
+      }
+      .arch-box.proxy {
+        border-color: var(--accent);
+        box-shadow: 3px 3px 0px var(--accent);
+        background: #fef3c7;
+      }
+      .arch-box.upstream {
+        border-color: var(--accent-green);
+        box-shadow: 2px 2px 0px rgba(5, 150, 105, 0.3);
+      }
+      .arch-box .tool-count {
+        font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+      .arch-arrow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        font-weight: 300;
+      }
+      .arch-arrow-label {
+        font-size: clamp(0.55rem, 0.8vw, 0.7rem);
+        color: var(--text-muted);
+        font-style: italic;
+      }
+
+      /* ===========================================
+           FLOW STEPS (search → schema → execute)
+           =========================================== */
+      .flow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: clamp(0.5rem, 1.5vw, 1rem);
+      }
+      .flow-num {
+        width: clamp(1.5rem, 3vw, 2.2rem);
+        height: clamp(1.5rem, 3vw, 2.2rem);
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-display);
+        font-size: var(--body-size);
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+      .flow-body h3 {
+        font-family: var(--font-mono);
+        font-size: clamp(0.8rem, 1.3vw, 1.1rem);
+        color: var(--accent);
+        margin-bottom: 2px;
+      }
+      .flow-body p {
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+      }
+      .flow-connector {
+        width: 2px;
+        height: clamp(0.8rem, 2vh, 1.5rem);
+        background: var(--border-sketch);
+        margin-left: clamp(0.7rem, 1.4vw, 1.05rem);
+      }
+
+      /* ===========================================
+           TABLE
+           =========================================== */
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: var(--small-size);
+      }
+      .data-table th {
+        text-align: left;
+        padding: clamp(0.3rem, 0.8vw, 0.6rem) clamp(0.4rem, 1vw, 0.8rem);
+        border-bottom: 2px solid var(--border-sketch);
+        color: var(--text);
+        font-weight: 600;
+        font-size: var(--small-size);
+      }
+      .data-table td {
+        padding: clamp(0.35rem, 0.8vw, 0.6rem) clamp(0.5rem, 1.2vw, 1rem);
+        border-bottom: 1px solid var(--border);
+        color: var(--text-secondary);
+      }
+      .data-table tr:last-child td {
+        border-bottom: none;
+      }
+      .data-table .highlight {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .data-table .pass {
+        color: var(--accent-green);
+        font-weight: 600;
+      }
+
+      /* ===========================================
+           DEMO SLIDE
+           =========================================== */
+      .demo-slide {
+        background: #1e1b18;
+        color: #faf6f1;
+      }
+      .demo-slide h1 {
+        color: #faf6f1;
+        font-size: clamp(3.5rem, 10vw, 8rem);
+        letter-spacing: 0.05em;
+      }
+      .demo-checklist {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.3rem, 0.8vh, 0.6rem);
+      }
+      .demo-checklist li {
+        font-size: var(--body-size);
+        color: #9c8e82;
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+      }
+      .demo-checklist li::before {
+        content: "▸";
+        color: var(--accent);
+      }
+
+      /* ===========================================
+           CHART CONTAINER
+           =========================================== */
+      .chart-container {
+        position: relative;
+        max-height: min(50vh, 420px);
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      /* ===========================================
+           SCOPE COMPARISON
+           =========================================== */
+      .scope-card {
+        background: var(--bg-card);
+        border: 2px solid var(--border-sketch);
+        border-radius: 8px;
+        padding: clamp(0.6rem, 1.5vw, 1.2rem);
+        box-shadow: 3px 3px 0px var(--border-sketch);
+      }
+      .scope-card h3 {
+        font-family: var(--font-mono);
+        font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+        color: var(--accent);
+        margin-bottom: clamp(0.2rem, 0.5vw, 0.4rem);
+      }
+      .scope-card ul {
+        list-style: none;
+        font-size: var(--small-size);
+        color: var(--text-secondary);
+      }
+      .scope-card ul li {
+        padding: 1px 0;
+      }
+      .scope-card ul li::before {
+        content: "✓ ";
+        color: var(--accent-green);
+        font-weight: bold;
+      }
+      .scope-card .blocked::before {
+        content: "✗ ";
+        color: var(--accent-red);
+      }
+      .scope-label {
+        font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        margin-bottom: clamp(0.15rem, 0.4vw, 0.3rem);
+      }
+
+      /* ===========================================
+           AUTH TYPE PILLS
+           =========================================== */
+      .auth-pill {
+        background: var(--bg-card);
+        border: 2px solid var(--border-sketch);
+        border-radius: 6px;
+        padding: clamp(0.4rem, 1vw, 0.7rem);
+        text-align: center;
+        box-shadow: 2px 2px 0px var(--border-sketch);
+      }
+      .auth-pill .auth-name {
+        font-family: var(--font-mono);
+        font-size: clamp(0.6rem, 1vw, 0.8rem);
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .auth-pill .auth-desc {
+        font-size: clamp(0.5rem, 0.8vw, 0.65rem);
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      /* ===========================================
+           SECURITY GRID
+           =========================================== */
+      .security-grid {
+        display: grid;
+        grid-template-columns: auto repeat(3, 1fr);
+        gap: clamp(0.2rem, 0.5vw, 0.4rem);
+        font-size: var(--small-size);
+      }
+      .security-grid .header {
+        font-weight: 600;
+        color: var(--text);
+        padding: clamp(0.2rem, 0.5vw, 0.4rem);
+        border-bottom: 2px solid var(--border-sketch);
+      }
+      .security-grid .cell {
+        padding: clamp(0.2rem, 0.5vw, 0.4rem);
+        text-align: center;
+      }
+      .security-grid .blocked {
+        color: var(--accent-green);
+        font-weight: 600;
+      }
+
+      /* ===========================================
+           PROGRESS BAR + COUNTER
+           =========================================== */
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent);
+        z-index: 1000;
+        transition: width 0.4s var(--ease-out-expo);
+      }
+      .slide-counter {
+        position: fixed;
+        bottom: clamp(0.5rem, 1.5vw, 1rem);
+        right: clamp(0.5rem, 1.5vw, 1rem);
+        font-family: var(--font-mono);
+        font-size: clamp(0.6rem, 0.8vw, 0.75rem);
+        color: var(--text-muted);
+        z-index: 1000;
+      }
+      .slide-nav {
+        position: fixed;
+        right: clamp(0.3rem, 0.8vw, 0.6rem);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 1000;
+      }
+      .slide-nav-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--border-sketch);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      .slide-nav-dot.active {
+        background: var(--accent);
+        transform: scale(1.4);
+      }
+
+      /* ===========================================
+           SUBTITLE + SPEAKER LINE
+           =========================================== */
+      .speaker-line {
+        font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+        color: var(--text-secondary);
+        margin-top: clamp(0.5rem, 1.5vw, 1rem);
+        line-height: 1.6;
+      }
+      .speaker-line .org {
+        color: var(--accent);
+      }
+      .subtitle {
+        font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+        color: var(--text-muted);
+        font-style: italic;
+        font-family: var(--font-display);
+      }
+      .event-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: clamp(0.7rem, 1vw, 0.85rem);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-muted);
+        border: 1px solid var(--border-sketch);
+        padding: 0.2em 0.6em;
+        border-radius: 4px;
+        margin-bottom: clamp(0.5rem, 1.5vw, 1rem);
+      }
+
+      /* ===========================================
+           CONTEXT BAR VISUAL
+           =========================================== */
+      .context-bar {
+        width: 100%;
+        max-width: 600px;
+        height: clamp(1.5rem, 3vh, 2.5rem);
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+        border: 2px solid var(--border-sketch);
+        box-shadow: 2px 2px 0px var(--border-sketch);
+      }
+      .context-bar .used {
+        background: var(--accent-red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: clamp(0.65rem, 1.1vw, 0.85rem);
+        font-weight: 600;
+      }
+      .context-bar .free {
+        background: var(--bg-warm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: clamp(0.65rem, 1.1vw, 0.85rem);
+      }
+
+      /* ===========================================
+           CTA / CLOSING
+           =========================================== */
+      .cta-link {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: clamp(0.8rem, 1.3vw, 1.1rem);
+        color: var(--accent);
+        border: 2px solid var(--accent);
+        padding: clamp(0.4rem, 1vw, 0.7rem) clamp(0.8rem, 2vw, 1.5rem);
+        border-radius: 6px;
+        text-decoration: none;
+        box-shadow: 3px 3px 0px var(--accent);
+        transition: all 0.2s ease;
+      }
+      .cta-link:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0px var(--accent);
+      }
+
+      /* ===========================================
+           APPROACH TABLE
+           =========================================== */
+      .approach-card {
+        text-align: center;
+        padding: clamp(0.6rem, 1.5vw, 1.2rem);
+      }
+      .approach-card .who {
+        font-size: clamp(0.8rem, 1.2vw, 1rem);
+        color: var(--text-muted);
+        margin-top: clamp(0.2rem, 0.5vw, 0.4rem);
+      }
+      .approach-card .label {
+        font-family: var(--font-mono);
+        font-size: clamp(0.9rem, 1.4vw, 1.15rem);
+        color: var(--text);
+        font-weight: 600;
+      }
+      .approach-card.winner {
+        border-color: var(--accent);
+        box-shadow: 3px 3px 0px var(--accent);
+      }
+      .approach-card.winner .label {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress-bar" id="progress"></div>
+    <div class="slide-counter" id="counter"></div>
+    <div class="slide-nav" id="slideNav"></div>
+
+    <div class="deck" id="deck">
+      <!-- ===== SLIDE 0: TITLE ===== -->
+      <div class="slide active" data-slide="0">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <div class="event-badge reveal">MCP Dev Summit 2026</div>
+          <h1 class="reveal" style="max-width: 900px">Putting MCP on a Diet</h1>
+          <p class="subtitle reveal">
+            A Proxy for Tool Scoping &amp; Context Compression
+          </p>
+          <p class="speaker-line reveal">
+            Prathamesh Saraf · Senior Forward Deployed Engineer @
+            <span class="org">TrueFoundry</span><br />Author of
+            <em>"My Adventures with LLMs"</em> · Research @ IISc
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Title",
+            "script": "Hi everyone. I'm Prathamesh Saraf, a senior forward deployed engineer at TrueFoundry. Today I want to talk about a problem I hit building MCP integrations — and a proxy-based solution called mcp-guardian.",
+            "notes": [
+              "mcp-guardian: open source MCP proxy",
+              "Tool scoping + context compression",
+              "Built and benchmarked against real servers"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 1: THE MCP TAX — HOOK ===== -->
+      <div class="slide" data-slide="1">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2
+            class="reveal"
+            style="color: var(--text-muted); font-size: var(--h3-size)"
+          >
+            The MCP Tax
+          </h2>
+          <div class="big-stat reveal">160,143</div>
+          <p class="big-stat-label reveal">
+            tokens loaded before your first message
+          </p>
+          <p
+            class="reveal"
+            style="
+              max-width: 500px;
+              margin-top: var(--content-gap);
+              color: var(--text-secondary);
+              font-size: var(--body-size);
+            "
+          >
+            <b>Example:</b> PostgreSQL MCP (248 tools) + GitHub MCP (41
+            tools).<br />
+            Every tool schema, in full, at startup.
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "The MCP Tax",
+            "script": "One hundred sixty thousand tokens. That's what gets loaded into your LLM's context window the moment you connect to a PostgreSQL MCP server and a GitHub MCP server. Before the user even types hello.",
+            "notes": [
+              "248 PostgreSQL tools + 41 GitHub tools = 289 total",
+              "Each tool has a full JSON schema",
+              "All loaded upfront at session start"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 2: WHY IT HURTS ===== -->
+      <div class="slide" data-slide="2">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal">Why this hurts</h2>
+          <div class="reveal" style="margin-top: var(--element-gap)">
+            <div class="context-bar">
+              <div class="used" style="width: 80%">80% — tool schemas</div>
+              <div class="free" style="width: 20%">20% left</div>
+            </div>
+            <p
+              style="
+                font-size: var(--small-size);
+                color: var(--text-muted);
+                margin-top: 0.3rem;
+              "
+            >
+              Claude's 200K context window
+            </p>
+          </div>
+          <div
+            class="three-col reveal"
+            style="max-width: 700px; margin-top: var(--content-gap)"
+          >
+            <div class="sketch-card" style="text-align: center">
+              <h3 style="font-size: clamp(1.5rem, 3vw, 2.2rem)">80%</h3>
+              <p>
+                context burned<br /><span
+                  style="font-size: clamp(0.55rem, 0.8vw, 0.65rem)"
+                  >before first user message</span
+                >
+              </p>
+            </div>
+            <div class="sketch-card" style="text-align: center">
+              <h3 style="font-size: clamp(1.5rem, 3vw, 2.2rem)">10x</h3>
+              <p>
+                compounding<br /><span
+                  style="font-size: clamp(0.55rem, 0.8vw, 0.65rem)"
+                  >schemas resent every turn</span
+                >
+              </p>
+            </div>
+            <div class="sketch-card" style="text-align: center">
+              <h3 style="font-size: clamp(1.5rem, 3vw, 2.2rem)">289</h3>
+              <p>
+                tool schemas<br /><span
+                  style="font-size: clamp(0.55rem, 0.8vw, 0.65rem)"
+                  >most never used in a session</span
+                >
+              </p>
+            </div>
+          </div>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: var(--small-size);
+              margin-top: var(--element-gap);
+            "
+          >
+            At Claude Opus 4.6 ($5/M tokens), 10-turn conversations:
+            <strong style="color: var(--accent)">$29K/yr</strong> at 10K/day ·
+            <strong style="color: var(--accent-red)">$292K/yr</strong> at
+            100K/day
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Why It Hurts",
+            "script": "Claude has a 200K token context window. You've burned 80 percent of it on tool descriptions before the agent does any work. And here's the kicker — those 160K tokens aren't a one-time cost. They're resent on every single turn. A 10-turn conversation pays for those schemas 10 times. At enterprise scale — 100K conversations a day — that's 292 thousand dollars a year in wasted input tokens. And most of those 289 tools are never used.",
+            "notes": [
+              "80% of context consumed by schemas",
+              "Schemas resent every turn — 10x compounding in a 10-turn conversation",
+              "10K convos/day × 10 turns: $29K/yr wasted",
+              "100K convos/day × 10 turns: $292K/yr wasted",
+              "289 tools but typical session uses 2-3"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 3: THE PATTERN — WHO IMPLEMENTS IT? ===== -->
+      <div class="slide" data-slide="3">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal">The MCP spec has the answer</h2>
+          <p
+            class="reveal"
+            style="
+              font-style: italic;
+              color: var(--text-secondary);
+              max-width: 600px;
+              font-size: var(--body-size);
+            "
+          >
+            "Clients should implement progressive tool discovery — don't load
+            all tools upfront."
+            <br /><span
+              style="font-size: var(--small-size); color: var(--text-muted)"
+              >— MCP Client Best Practices</span
+            >
+          </p>
+          <div
+            class="three-col reveal"
+            style="max-width: 800px; margin-top: var(--content-gap)"
+          >
+            <div class="sketch-card approach-card">
+              <div class="label">Spec Recommendation</div>
+              <div class="who">Every client must implement it</div>
+              <div style="font-size: clamp(0.7rem, 1vw, 0.9rem); color: var(--text-secondary); margin-top: 0.3rem; font-style: italic;">Client-side pagination &amp; filtering</div>
+            </div>
+            <div class="sketch-card approach-card">
+              <div class="label">FastMCP Code Mode</div>
+              <div class="who">Every server must opt in</div>
+              <div style="font-size: clamp(0.7rem, 1vw, 0.9rem); color: var(--text-secondary); margin-top: 0.3rem; font-style: italic;">Server groups tools in code</div>
+            </div>
+            <div class="sketch-card approach-card winner">
+              <div class="label">Proxy (mcp-guardian)</div>
+              <div class="who">Nobody changes anything</div>
+              <div style="font-size: clamp(0.7rem, 1vw, 0.9rem); color: var(--text-secondary); margin-top: 0.3rem; font-style: italic;">Transparent layer in between</div>
+            </div>
+          </div>
+          <p
+            class="reveal"
+            style="
+              color: var(--text-muted);
+              font-size: var(--small-size);
+              margin-top: var(--element-gap);
+            "
+          >
+            Works with unmodified clients <em>and</em> unmodified servers
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "The Pattern",
+            "script": "The MCP spec actually recommends progressive tool discovery. But who implements it? The spec says clients should. That means Claude Desktop, Cursor, every custom agent — they each have to build it from scratch. FastMCP Code Mode puts it on the server side, but good luck getting GitHub and Slack to add that. mcp-guardian solves this at the infrastructure layer. Nobody has to change anything.",
+            "notes": [
+              "Spec recommends progressive discovery",
+              "Client-side: each client must implement",
+              "Server-side: each server must opt in",
+              "Proxy: works with everything unmodified"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 4: THE IDEA — 99.7% ===== -->
+      <div class="slide" data-slide="4">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal">One proxy. Three meta-tools.</h2>
+          <div
+            class="two-col reveal"
+            style="max-width: 700px; margin-top: var(--element-gap)"
+          >
+            <div style="text-align: center">
+              <div
+                style="
+                  font-family: var(--font-display);
+                  font-size: clamp(2rem, 5vw, 3.5rem);
+                  color: var(--accent-red);
+                  text-decoration: line-through;
+                  opacity: 0.6;
+                "
+              >
+                160,143
+              </div>
+              <p style="font-size: var(--small-size); color: var(--text-muted)">
+                tokens (direct)
+              </p>
+            </div>
+            <div style="text-align: center">
+              <div
+                style="
+                  font-family: var(--font-display);
+                  font-size: clamp(2rem, 5vw, 3.5rem);
+                  color: var(--accent-green);
+                "
+              >
+                456
+              </div>
+              <p style="font-size: var(--small-size); color: var(--text-muted)">
+                tokens (proxy)
+              </p>
+            </div>
+          </div>
+          <div
+            class="big-stat reveal"
+            style="font-size: clamp(2.5rem, 7vw, 5rem)"
+          >
+            99.7% reduction
+          </div>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "The Idea",
+            "script": "The idea is simple. Instead of forwarding 289 tool schemas, the proxy exposes exactly three meta-tools. The client sees 456 tokens instead of 160 thousand. That's a 99.7 percent reduction. The agent discovers tools on demand — search, inspect the schema, then execute.",
+            "notes": [
+              "3 meta-tools replace 289 tool schemas",
+              "456 tokens vs 160,143",
+              "99.7% context reduction"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 5: THREE META-TOOLS ===== -->
+      <div class="slide" data-slide="5">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">The three meta-tools</h2>
+          <div
+            class="three-col reveal"
+            style="max-width: 900px; margin: 0 auto"
+          >
+            <div class="sketch-card">
+              <h3>search_tools</h3>
+              <p><code>search_tools("tables")</code></p>
+              <p style="margin-top: 0.3rem">
+                Pluggable search (keyword, semantic, …) over allowed tools.
+                Returns names + one-line briefs.
+              </p>
+            </div>
+            <div class="sketch-card">
+              <h3>get_schema</h3>
+              <p><code>get_schema("pg_list_tables")</code></p>
+              <p style="margin-top: 0.3rem">
+                Full JSON input schema for one tool. Load only what you need.
+              </p>
+            </div>
+            <div class="sketch-card">
+              <h3>execute_tool</h3>
+              <p><code>execute_tool("pg_list_tables", {})</code></p>
+              <p style="margin-top: 0.3rem">
+                Proxied call to the upstream server. Scope-checked + audit
+                logged.
+              </p>
+            </div>
+          </div>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: var(--small-size);
+              margin-top: var(--element-gap);
+            "
+          >
+            Progressive discovery: <strong>search → schema → execute</strong>
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Three Meta-Tools",
+            "script": "Here are the three tools the client actually sees. search_tools takes a natural language query and returns matching tool names with brief descriptions. get_schema gives you the full parameter schema for one specific tool. And execute_tool forwards the actual call to upstream. The agent uses them in sequence: search, then schema, then execute.",
+            "notes": [
+              "search_tools: pluggable strategy (keyword now, semantic later), returns briefs",
+              "get_schema: full JSON schema for one tool",
+              "execute_tool: proxied call with scope check + audit",
+              "Pattern: search → schema → execute"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 6: ARCHITECTURE ===== -->
+      <div class="slide" data-slide="6">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Architecture</h2>
+          <div
+            class="reveal"
+            style="
+              display: grid;
+              grid-template-columns: 1fr auto 2fr auto 1fr;
+              align-items: center;
+              gap: clamp(0.3rem, 1vw, 0.8rem);
+              max-width: 900px;
+              margin: 0 auto;
+            "
+          >
+            <div class="arch-box">
+              <strong>AI Client</strong>
+              <div class="tool-count">Claude, Cursor, etc.</div>
+            </div>
+            <div style="text-align: center">
+              <div class="arch-arrow">→</div>
+              <div class="arch-arrow-label">3 tools</div>
+            </div>
+            <div class="arch-box proxy">
+              <strong>mcp-guardian</strong>
+              <div class="tool-count" style="color: var(--accent-warm)">
+                scope.yaml · tool index · audit log
+              </div>
+            </div>
+            <div style="text-align: center">
+              <div class="arch-arrow">→</div>
+              <div class="arch-arrow-label">proxied</div>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: clamp(0.3rem, 0.8vw, 0.5rem);
+              "
+            >
+              <div class="arch-box upstream">
+                <strong>PostgreSQL</strong>
+                <div class="tool-count">248 tools</div>
+              </div>
+              <div class="arch-box upstream">
+                <strong>GitHub</strong>
+                <div class="tool-count">41 tools</div>
+              </div>
+              <div class="arch-box upstream">
+                <strong>Trends</strong>
+                <div class="tool-count">3 tools</div>
+              </div>
+            </div>
+          </div>
+          <p
+            class="reveal centered"
+            style="color: var(--text-muted); font-size: var(--small-size)"
+          >
+            Client sees a normal MCP server · Upstream sees a normal MCP client
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Architecture",
+            "script": "The architecture is straightforward. The AI client — Claude, Cursor, any MCP-compatible agent — connects to mcp-guardian, which looks like a normal MCP server exposing 3 tools. On the other side, the proxy connects to your upstream servers as a normal MCP client. In the middle: scope filtering, a searchable tool index, and an audit log.",
+            "notes": [
+              "Proxy sits between client and upstream",
+              "Client sees 3 tools (456 tokens)",
+              "Upstream servers: PostgreSQL, GitHub, Trends",
+              "scope.yaml controls what's visible"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 7: DATA FLOW ===== -->
+      <div class="slide" data-slide="7">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">How a request flows</h2>
+          <div
+            style="
+              max-width: 700px;
+              margin: 0 auto;
+              display: flex;
+              flex-direction: column;
+              gap: 0;
+            "
+          >
+            <div class="flow-step reveal">
+              <div class="flow-num">1</div>
+              <div class="flow-body">
+                <h3>search_tools("list tables")</h3>
+                <p>
+                  Index lookup — no upstream call. Returns:
+                  <code>pg_list_tables</code>, <code>pg_describe_table</code>,
+                  ...
+                </p>
+              </div>
+            </div>
+            <div class="flow-connector reveal"></div>
+            <div class="flow-step reveal">
+              <div class="flow-num">2</div>
+              <div class="flow-body">
+                <h3>get_schema("pg_list_tables")</h3>
+                <p>
+                  Index lookup — returns full inputSchema. Still no upstream
+                  call.
+                </p>
+              </div>
+            </div>
+            <div class="flow-connector reveal"></div>
+            <div class="flow-step reveal">
+              <div class="flow-num">3</div>
+              <div class="flow-body">
+                <h3>execute_tool("pg_list_tables", {})</h3>
+                <p>
+                  Scope check → audit log → forward to PostgreSQL MCP → return
+                  result.
+                </p>
+              </div>
+            </div>
+          </div>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: var(--small-size);
+              margin-top: var(--element-gap);
+            "
+          >
+            Only step 3 hits upstream. Steps 1 &amp; 2 are served from memory.
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Data Flow",
+            "script": "Here's how a request flows. The agent searches for 'list tables' — that's an in-memory index lookup, instant, no network call. Then it gets the schema — again from memory. Only when it calls execute_tool does the proxy actually hit the upstream PostgreSQL server. Two out of three steps are completely local.",
+            "notes": [
+              "Step 1: search — index lookup, ~1ms",
+              "Step 2: schema — index lookup, ~0ms",
+              "Step 3: execute — scope check + audit + forward to upstream",
+              "Only execute_tool touches the network"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 8: SCOPE & SECURITY ===== -->
+      <div class="slide" data-slide="8">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Scopes: fine-grained access control</h2>
+          <div class="two-col reveal" style="max-width: 800px; margin: 0 auto">
+            <div class="scope-card">
+              <div class="scope-label">Allowlist — read only</div>
+              <h3>support-agent</h3>
+              <ul>
+                <li>pg_read_query</li>
+                <li>pg_list_tables</li>
+                <li>list_issues</li>
+                <li>search_issues</li>
+                <li>get_top_trends</li>
+              </ul>
+              <p
+                style="
+                  margin-top: 0.3rem;
+                  font-size: clamp(0.55rem, 0.8vw, 0.65rem);
+                  color: var(--text-muted);
+                "
+              >
+                14 tools out of 289 — everything else invisible
+              </p>
+            </div>
+            <div class="scope-card">
+              <div class="scope-label">Wildcard — minus dangerous</div>
+              <h3>developer</h3>
+              <ul>
+                <li>Everything from 3 servers</li>
+                <li class="blocked">pg_drop_table</li>
+                <li class="blocked">pg_truncate</li>
+                <li class="blocked">delete_file</li>
+                <li class="blocked">push_files</li>
+              </ul>
+              <p
+                style="
+                  margin-top: 0.3rem;
+                  font-size: clamp(0.55rem, 0.8vw, 0.65rem);
+                  color: var(--text-muted);
+                "
+              >
+                282 tools — blocked tools can't be found, inspected, or called
+              </p>
+            </div>
+          </div>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: var(--small-size);
+              margin-top: var(--element-gap);
+            "
+          >
+            Defined in <code>scope.yaml</code> · No code changes · Defense in
+            depth across all 3 meta-tools
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Scope & Security",
+            "script": "Scopes are named permission sets defined in scope.yaml. A support-agent scope gets 14 read-only tools from 3 servers — everything else is invisible. A developer scope gets everything minus dangerous operations like drop table or delete file. Blocked tools can't be found via search, can't be inspected via get_schema, can't be executed. Defense in depth.",
+            "notes": [
+              "support-agent: 14 tools, explicit allowlist",
+              "developer: 282 tools, blocklist for dangerous ops",
+              "Blocked tools invisible across all 3 meta-tools",
+              "Defined in YAML, no code changes"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 9: AUTH TYPES ===== -->
+      <div class="slide" data-slide="9">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Five auth types, zero code</h2>
+          <div class="five-col reveal" style="max-width: 900px; margin: 0 auto">
+            <div class="auth-pill">
+              <div class="auth-name">none</div>
+              <div class="auth-desc">Public servers</div>
+            </div>
+            <div class="auth-pill">
+              <div class="auth-name">bearer_env</div>
+              <div class="auth-desc">API key from env / dashboard / client</div>
+            </div>
+            <div class="auth-pill">
+              <div class="auth-name">static_header</div>
+              <div class="auth-desc">Custom header (X-API-Key)</div>
+            </div>
+            <div class="auth-pill">
+              <div class="auth-name">token_passthrough</div>
+              <div class="auth-desc">Forward client's auth</div>
+            </div>
+            <div class="auth-pill">
+              <div class="auth-name">oauth</div>
+              <div class="auth-desc">Browser-based OAuth flow</div>
+            </div>
+          </div>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: var(--small-size);
+              margin-top: var(--content-gap);
+            "
+          >
+            All configured in <code>scope.yaml</code> · Secrets stay in
+            <code>.env</code> · Dashboard manages keys + OAuth sessions
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Auth Types",
+            "script": "The proxy supports five auth types, all configured in YAML. No code changes. From simple 'no auth' to full browser-based OAuth with pre-registered client support. bearer_env is the most flexible — it resolves tokens from the client header, the dashboard, or an environment variable, in that priority order. Secrets never appear in scope.yaml.",
+            "notes": [
+              "none: public servers",
+              "bearer_env: env var / dashboard / client header priority chain",
+              "static_header: custom header like X-API-Key",
+              "token_passthrough: per-user auth forwarding",
+              "oauth: browser flow, supports pre-registered clients"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 10: LIVE DEMO ===== -->
+      <div class="slide demo-slide" data-slide="10">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h1 class="reveal">LIVE DEMO</h1>
+          <ul class="demo-checklist reveal">
+            <li>Dashboard — server cards, connection status</li>
+            <li>OAuth connect — GitHub via browser flow</li>
+            <li>API key — Trends MCP from dashboard</li>
+            <li>Tool search — find tools by natural language</li>
+            <li>Chat Demo — talk to your tools, see token savings live</li>
+          </ul>
+          <p
+            class="reveal"
+            style="
+              color: #6b5e53;
+              font-size: var(--small-size);
+              margin-top: var(--content-gap);
+            "
+          >
+            mcp-guardian dashboard
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Live Demo",
+            "script": "Time for a live demo. I'm going to show you the dashboard — server cards showing connection status, connecting to GitHub via OAuth, entering a Trends API key, searching for tools, and then the Chat Demo tab where an LLM uses progressive discovery to answer questions while we watch token costs in real time.",
+            "notes": [
+              "Open mcp-guardian dashboard",
+              "Server cards with OAuth/API key status",
+              "Tool search across all servers",
+              "Chat Demo: LLM + progressive discovery + live token accounting"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 11: TOKEN SAVINGS CHART ===== -->
+      <div class="slide" data-slide="11">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Benchmark: Token Savings (99.7%)</h2>
+          <div class="chart-container reveal">
+            <canvas id="tokenChart"></canvas>
+          </div>
+          <p
+            class="reveal centered"
+            style="color: var(--text-muted); font-size: var(--small-size)"
+          >
+            Tested against real servers: PostgreSQL MCP (248 tools) + GitHub MCP
+            (41 tools)
+          </p>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+              margin-top: 0.3rem;
+              font-style: italic;
+            "
+          >
+            Experiment 1 — How many tokens does the proxy save at session
+            startup? (160,143 → 456 tokens)
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Token Savings",
+            "script": "Let's look at the benchmarks. On the left, direct connection — 160 thousand tokens loaded at startup. On the right, the proxy — 456 tokens. Even after a search and get_schema call, you're at 2,100 tokens. That's still 98.7 percent savings.",
+            "notes": [
+              "Direct: 160,143 tokens at startup",
+              "Proxy startup: 456 tokens (99.7%)",
+              "After search: 505 tokens",
+              "After search + schema: 2,119 tokens (98.7%)"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 12: LATENCY ===== -->
+      <div class="slide" data-slide="12">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Benchmark: Latency (−8ms overhead)</h2>
+          <p
+            class="reveal centered"
+            style="color: var(--text-secondary); font-size: var(--body-size)"
+          >
+            Does the proxy add overhead?
+          </p>
+          <div class="reveal" style="max-width: 600px; margin: 0 auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mode</th>
+                  <th>Mean</th>
+                  <th>Median</th>
+                  <th>P95</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Direct</td>
+                  <td>4,652ms</td>
+                  <td>4,624ms</td>
+                  <td>4,838ms</td>
+                </tr>
+                <tr>
+                  <td>Proxy</td>
+                  <td>4,644ms</td>
+                  <td>4,640ms</td>
+                  <td>4,709ms</td>
+                </tr>
+                <tr>
+                  <td><strong>Overhead</strong></td>
+                  <td class="highlight">-8ms</td>
+                  <td class="highlight">+19ms</td>
+                  <td class="highlight">-129ms</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="big-stat reveal centered"
+            style="
+              font-size: clamp(1.5rem, 4vw, 3rem);
+              margin-top: var(--element-gap);
+            "
+          >
+            Zero overhead
+          </div>
+          <p
+            class="reveal centered"
+            style="color: var(--text-muted); font-size: var(--small-size)"
+          >
+            Within measurement noise. Sometimes faster — fewer schemas to load
+            at connect.
+          </p>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+              margin-top: 0.3rem;
+              font-style: italic;
+            "
+          >
+            Experiment 2 — Does proxying add latency to tool execution?
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Latency",
+            "script": "Does the proxy slow things down? No. Mean overhead is negative 8 milliseconds — within noise. The proxy can actually be faster because it loads 3 tool schemas at connect time instead of 248. The overhead of proxying is completely invisible compared to upstream call latency.",
+            "notes": [
+              "Mean overhead: -8ms (within noise)",
+              "Median: +19ms",
+              "P95: -129ms (faster!)",
+              "Proxy overhead negligible vs upstream latency"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 13: SCALING CHART ===== -->
+      <div class="slide" data-slide="13">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Benchmark: Scaling (95%+ at 39 tools)</h2>
+          <div class="chart-container reveal">
+            <canvas id="scalingChart"></canvas>
+          </div>
+          <p
+            class="reveal centered"
+            style="color: var(--text-muted); font-size: var(--small-size)"
+          >
+            Break-even at <strong class="accent">39 tools</strong> for 95%+
+            savings. Most real MCP servers are well above.
+          </p>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+              margin-top: 0.3rem;
+              font-style: italic;
+            "
+          >
+            Experiment 4 — At what tool count does the proxy's savings dominate?
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Scaling",
+            "script": "How does it scale? This chart shows savings percentage versus tool count. At 14 tools, savings are 84 percent — decent but marginal. At 39 tools, we cross 95 percent. At 200 tools, it's 99.1 percent. Most real-world MCP servers — PostgreSQL at 248, GitHub at 41 — are well above the break-even point.",
+            "notes": [
+              "14 tools: 84.5% savings (marginal)",
+              "39 tools: 95% (break-even)",
+              "200 tools: 99.1%",
+              "500 tools: 99.7%"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 14: SECURITY ===== -->
+      <div class="slide" data-slide="14">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal">Benchmark: Scope Security (27/27)</h2>
+          <p
+            class="reveal"
+            style="color: var(--text-secondary); font-size: var(--body-size)"
+          >
+            9 dangerous tools tested across 3 attack vectors
+          </p>
+          <div class="reveal" style="max-width: 550px; margin: 0 auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Attack Vector</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>search_tools</td>
+                  <td class="pass">All 9 HIDDEN</td>
+                </tr>
+                <tr>
+                  <td>get_schema</td>
+                  <td class="pass">All 9 BLOCKED</td>
+                </tr>
+                <tr>
+                  <td>execute_tool</td>
+                  <td class="pass">All 9 BLOCKED</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div
+            class="big-stat reveal"
+            style="
+              font-size: clamp(2rem, 5vw, 3.5rem);
+              margin-top: var(--element-gap);
+            "
+          >
+            27/27 passed
+          </div>
+          <p
+            class="reveal"
+            style="color: var(--text-muted); font-size: var(--small-size)"
+          >
+            Blocked tools can't be discovered, inspected, or executed — even if
+            the exact name is guessed.
+          </p>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+              margin-top: 0.3rem;
+              font-style: italic;
+            "
+          >
+            Experiment 5 — Are blocked tools truly invisible across all access
+            vectors?
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Security",
+            "script": "Security — 9 dangerous tools like pg_drop_table and delete_file, tested across all 3 meta-tools. Can you find them via search? No. Can you get their schema? No. Can you execute them if you guess the exact name? No. 27 out of 27 checks passed. Defense in depth.",
+            "notes": [
+              "9 tools: pg_drop_table, delete_file, etc.",
+              "3 vectors: search, schema, execute",
+              "27/27 checks passed",
+              "Even guessing exact tool name is blocked"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 15: ADD A SERVER ===== -->
+      <div class="slide" data-slide="15">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Adding a server: zero code</h2>
+          <div class="reveal" style="max-width: 700px; margin: 0 auto">
+            <pre
+              class="code-block"
+            ><span class="comment"># scope.yaml — just add this:</span>
+<span class="key">upstream_servers</span>:
+  <span class="key">github</span>:
+    <span class="key">url</span>: <span class="string">https://github-mcp.example.com/mcp</span>
+    <span class="key">auth</span>:
+      <span class="key">type</span>: <span class="string">bearer_env</span>
+      <span class="key">value_env</span>: <span class="string">GITHUB_TOKEN</span>
+
+<span class="key">scopes</span>:
+  <span class="key">developer</span>:
+    <span class="key">servers</span>:
+      <span class="key">github</span>:
+        <span class="key">blocked_tools</span>:
+          - <span class="string">delete_file</span>
+          - <span class="string">push_files</span></pre>
+          </div>
+          <p
+            class="reveal centered"
+            style="
+              color: var(--text-muted);
+              font-size: var(--small-size);
+              margin-top: var(--element-gap);
+            "
+          >
+            Set the env var. Restart the proxy. <strong>Done.</strong>
+          </p>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Add a Server",
+            "script": "Want to add a new MCP server? No Python required. Add the server URL and auth to scope.yaml, reference it in your scope, set the env var, restart. That's it. Here's GitHub — bearer token auth, developer scope with a blocklist for dangerous ops like delete_file. Works with any MCP-compliant server.",
+            "notes": [
+              "Add server to scope.yaml",
+              "Reference in scope definition",
+              "Set env var, restart proxy",
+              "No code changes needed"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 16: MCP GATEWAY ===== -->
+      <div class="slide" data-slide="16">
+        <div
+          class="slide-content"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal centered">Complex auth? Use an MCP Gateway</h2>
+          <p
+            class="reveal centered"
+            style="color: var(--text-secondary); font-size: var(--body-size)"
+          >
+            OAuth, scopes, secrets, RBAC — offload to a gateway
+          </p>
+          <div
+            class="two-col reveal"
+            style="max-width: 900px; margin: 0 auto; align-items: flex-start"
+          >
+            <div style="flex: 1">
+              <pre
+                class="code-block"
+                style="font-size: clamp(0.6rem, 0.9vw, 0.8rem)"
+              ><span class="comment"># Slack MCP — gateway config</span>
+<span class="key">name</span>: <span class="string">slack-mcp</span>
+<span class="key">url</span>: <span class="string">https://...truefoundry.cloud/slack-mcp/mcp</span>
+<span class="key">auth_data</span>:
+  <span class="key">type</span>: <span class="string">oauth2</span>
+  <span class="key">grant_type</span>: <span class="string">authorization_code</span>
+  <span class="key">authorization_url</span>: <span class="string">https://slack.com/oauth/v2/authorize</span>
+  <span class="key">token_url</span>: <span class="string">https://slack.com/api/oauth.v2.access</span>
+  <span class="key">client_id</span>: <span class="string">"2879..."</span>
+  <span class="key">client_secret</span>: <span class="string">tfy-secret://...</span>
+  <span class="key">scopes</span>:
+    - <span class="string">channels:read</span>
+    - <span class="string">chat:write</span>
+    - <span class="string">users:read</span>
+    <span class="comment"># ... 10 more scopes</span></pre>
+            </div>
+            <div
+              style="
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: var(--element-gap);
+                justify-content: center;
+              "
+            >
+              <p
+                style="
+                  font-size: var(--body-size);
+                  color: var(--text);
+                  text-align: center;
+                  line-height: 1.5;
+                "
+              >
+                <strong>TrueFoundry MCP Gateway</strong> handles:<br />
+                <span style="color: var(--text-secondary)"
+                  >OAuth flows · Secret management<br />RBAC · Rate limiting ·
+                  Per-user isolation</span
+                >
+              </p>
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  gap: 0.3rem;
+                  margin-top: 0.5rem;
+                "
+              >
+                <canvas
+                  id="qrPlayground"
+                  width="130"
+                  height="130"
+                  style="
+                    border: 2px solid var(--border-sketch);
+                    border-radius: 8px;
+                    box-shadow: 2px 2px 0px var(--border-sketch);
+                  "
+                ></canvas>
+                <a
+                  href="https://mcp-playground-frontend.ml.tfy-eo.truefoundry.cloud/"
+                  target="_blank"
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: clamp(0.6rem, 0.85vw, 0.75rem);
+                    color: var(--accent);
+                    text-decoration: none;
+                  "
+                  >Public MCP Playground</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "MCP Gateway",
+            "script": "Some MCP servers need complex auth — OAuth with multiple scopes, client secrets, token refresh. Instead of handling all that in mcp-guardian, offload to an MCP gateway like TrueFoundry. It handles OAuth flows, secret management, RBAC, and per-user isolation. Your proxy just points to the gateway URL with simple bearer auth. Here's what a Slack config looks like — 13 OAuth scopes, secret management, authorization code flow. The gateway handles all of it. Try it at our public MCP Playground.",
+            "notes": [
+              "Complex auth: OAuth, scopes, secrets, RBAC",
+              "Offload to MCP Gateway like TrueFoundry",
+              "mcp-guardian points to gateway with simple bearer auth",
+              "Public playground: mcp-playground-frontend.ml.tfy-eo.truefoundry.cloud"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 17: OPEN SOURCE ===== -->
+      <div class="slide" data-slide="17">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: var(--content-gap)"
+        >
+          <h2 class="reveal">Open source. Try it today.</h2>
+          <div class="reveal" style="max-width: 600px; margin: 0 auto">
+            <pre
+              class="code-block"
+            ><span class="string">git clone</span> github.com/prathamesh-saraf/mcp-guardian
+<span class="string">cd</span> mcp-guardian
+<span class="string">uv sync</span> --dev
+<span class="string">cp</span> examples/scope.direct.yaml scope.yaml
+<span class="string">uv run</span> mcp-guardian --scope support-agent</pre>
+          </div>
+          <div
+            class="three-col reveal"
+            style="max-width: 600px; margin-top: var(--content-gap)"
+          >
+            <div class="sketch-card" style="text-align: center">
+              <h3>MIT</h3>
+              <p>Licensed</p>
+            </div>
+            <div class="sketch-card" style="text-align: center">
+              <h3>Python</h3>
+              <p>Built with FastMCP</p>
+            </div>
+            <div class="sketch-card" style="text-align: center">
+              <h3>Docker</h3>
+              <p>Ready to deploy</p>
+            </div>
+          </div>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Open Source",
+            "script": "mcp-guardian is open source, MIT licensed, built with Python and FastMCP. Five commands to get running. Docker-ready for production. The scope.yaml examples in the repo cover PostgreSQL, GitHub, and Trends MCP out of the box.",
+            "notes": [
+              "GitHub: prathamesh-saraf/mcp-guardian",
+              "MIT license",
+              "5 commands to get running",
+              "Docker support included"
+            ]
+          }
+        </script>
+      </div>
+
+      <!-- ===== SLIDE 18: THANK YOU / Q&A ===== -->
+      <div class="slide" data-slide="18">
+        <div
+          class="slide-content centered"
+          style="justify-content: center; gap: clamp(0.5rem, 1.5vw, 1.2rem)"
+        >
+          <h1 class="reveal" style="font-size: clamp(2.5rem, 6vw, 4rem)">
+            Thank you
+          </h1>
+          <p class="subtitle reveal">Questions?</p>
+          <div
+            class="reveal"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              justify-content: center;
+              align-items: flex-start;
+              gap: clamp(1.5rem, 4vw, 3rem);
+              margin-top: var(--content-gap);
+            "
+          >
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: var(--element-gap);
+              "
+            >
+              <canvas
+                id="qrCanvas"
+                width="160"
+                height="160"
+                style="
+                  border: 2px solid var(--border-sketch);
+                  border-radius: 8px;
+                  box-shadow: 2px 2px 0px var(--border-sketch);
+                "
+              ></canvas>
+              <a
+                href="https://leanpub.com/adventures-with-llms"
+                target="_blank"
+                style="
+                  font-family: var(--font-mono);
+                  font-size: clamp(0.7rem, 1vw, 0.85rem);
+                  color: var(--accent);
+                  text-decoration: none;
+                "
+                >leanpub.com/adventures-with-llms</a
+              >
+              <p
+                style="
+                  font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+                  color: var(--text-muted);
+                  font-style: italic;
+                "
+              >
+                "My Adventures with LLMs"
+              </p>
+            </div>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: clamp(0.4rem, 0.8vw, 0.6rem);
+              "
+            >
+              <p
+                style="
+                  font-size: var(--body-size);
+                  color: var(--text);
+                  line-height: 1.5;
+                "
+              >
+                <strong>Prathamesh Saraf</strong><br />
+                <span style="color: var(--text-secondary)"
+                  >Senior FDE @
+                  <span style="color: var(--accent)">TrueFoundry</span></span
+                ><br />
+                <span style="color: var(--text-secondary)"
+                  >Author · Researcher @ IISc</span
+                >
+              </p>
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: clamp(0.3rem, 0.6vw, 0.5rem);
+                  margin-top: clamp(0.3rem, 0.5vw, 0.5rem);
+                "
+              >
+                <a
+                  href="https://github.com/S1LV3RJ1NX"
+                  target="_blank"
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: var(--small-size);
+                    color: var(--text-secondary);
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                  "
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                    />
+                  </svg>
+                  /S1LV3RJ1NX
+                </a>
+                <a
+                  href="https://linkedin.com/in/sarafpr"
+                  target="_blank"
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: var(--small-size);
+                    color: var(--text-secondary);
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                  "
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+                    />
+                  </svg>
+                  /sarafpr
+                </a>
+                <a
+                  href="https://x.com/s1lv3rj1nx"
+                  target="_blank"
+                  style="
+                    font-family: var(--font-mono);
+                    font-size: var(--small-size);
+                    color: var(--text-secondary);
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                  "
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                    />
+                  </svg>
+                  /s1lv3rj1nx
+                </a>
+              </div>
+              <p
+                style="
+                  font-family: var(--font-mono);
+                  font-size: var(--small-size);
+                  color: var(--accent);
+                  margin-top: clamp(0.3rem, 0.5vw, 0.5rem);
+                "
+              >
+                github.com/prathamesh-saraf/mcp-guardian
+              </p>
+            </div>
+          </div>
+        </div>
+        <script type="application/json" class="slide-notes">
+          {
+            "title": "Thank You",
+            "script": "Thank you for listening. mcp-guardian is open source and ready to use today. I'd love to hear your questions — about the proxy, scope design, scaling, auth, anything. You can find me on GitHub, LinkedIn, and X. And do check out my book on building LLM architectures from scratch.",
+            "notes": [
+              "GitHub: /S1LV3RJ1NX",
+              "LinkedIn: /sarafpr",
+              "X: /s1lv3rj1nx",
+              "Book: leanpub.com/adventures-with-llms"
+            ]
+          }
+        </script>
+      </div>
+    </div>
+    <!-- /deck -->
+
+    <script>
+      /* ===========================================
+           NAVIGATION (REQUIRED — global functions)
+           =========================================== */
+      var slides = document.querySelectorAll(".slide");
+      var current = 0;
+      var total = slides.length;
+
+      function goTo(index) {
+        if (index < 0 || index >= total || index === current) return;
+        var prev = current;
+        current = index;
+        slides.forEach(function (s, i) {
+          s.classList.toggle("active", i === current);
+        });
+        slides[current].scrollIntoView({ behavior: "smooth" });
+        updateUI();
+        showSpeakerNotes(current);
+
+        /* Chart lifecycle */
+        if (typeof Chart !== "undefined") {
+          var prevCanvases = slides[prev].querySelectorAll("canvas");
+          prevCanvases.forEach(function (c) {
+            var inst = Chart.getChart(c);
+            if (inst) inst.destroy();
+          });
+        }
+        setTimeout(function () {
+          initChartsForSlide(current);
+        }, 400);
+      }
+
+      function next() {
+        goTo(current + 1);
+      }
+      function prev() {
+        goTo(current - 1);
+      }
+
+      function updateUI() {
+        var progress = document.getElementById("progress");
+        if (progress)
+          progress.style.width = ((current + 1) / total) * 100 + "%";
+        var counter = document.getElementById("counter");
+        if (counter) counter.textContent = current + 1 + " / " + total;
+        document.querySelectorAll(".slide-nav-dot").forEach(function (d, i) {
+          d.classList.toggle("active", i === current);
+        });
+      }
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+          e.preventDefault();
+          next();
+        }
+        if (e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          prev();
+        }
+        if (e.key === "Home") {
+          e.preventDefault();
+          goTo(0);
+        }
+        if (e.key === "End") {
+          e.preventDefault();
+          goTo(total - 1);
+        }
+      });
+
+      var touchStart = 0;
+      document.addEventListener("touchstart", function (e) {
+        touchStart = e.touches[0].clientX;
+      });
+      document.addEventListener("touchend", function (e) {
+        var diff = touchStart - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) {
+          diff > 0 ? next() : prev();
+        }
+      });
+
+      var wheelCD = false;
+      document.addEventListener(
+        "wheel",
+        function (e) {
+          if (wheelCD) return;
+          wheelCD = true;
+          setTimeout(function () {
+            wheelCD = false;
+          }, 600);
+          if (e.deltaY > 0 || e.deltaX > 0) next();
+          else prev();
+        },
+        { passive: true },
+      );
+
+      var slideNav = document.getElementById("slideNav");
+      if (slideNav) {
+        slides.forEach(function (_, i) {
+          var dot = document.createElement("div");
+          dot.className = "slide-nav-dot" + (i === 0 ? " active" : "");
+          dot.addEventListener("click", function () {
+            goTo(i);
+          });
+          slideNav.appendChild(dot);
+        });
+      }
+
+      updateUI();
+
+      /* ===========================================
+           SPEAKER NOTES (Console)
+           =========================================== */
+      function showSpeakerNotes(index) {
+        var slide = slides[index];
+        var notesEl =
+          slide.querySelector("script.slide-notes") ||
+          slide.querySelector('[class="slide-notes"]');
+        console.clear();
+        if (notesEl) {
+          try {
+            var n = JSON.parse(notesEl.textContent);
+            var title = n.title || "Slide " + (index + 1);
+            console.group(
+              "%c\ud83d\udccb Slide " +
+                (index + 1) +
+                "/" +
+                total +
+                ": " +
+                title,
+              "font-size:16px;font-weight:bold;color:#D97706;",
+            );
+            if (n.script)
+              console.log(
+                "%c" + n.script,
+                "font-size:14px;color:#1A1612;line-height:1.6;padding:4px 0;",
+              );
+            if (n.notes && n.notes.length) {
+              console.log(
+                "%cKey points:",
+                "font-size:11px;color:#9C8E82;margin-top:4px;",
+              );
+              n.notes.forEach(function (note) {
+                console.log(
+                  "%c  \u2022 " + note,
+                  "font-size:12px;color:#6B5E53;",
+                );
+              });
+            }
+            console.groupEnd();
+          } catch (e) {}
+        }
+      }
+      setTimeout(function () {
+        showSpeakerNotes(0);
+      }, 500);
+
+      /* ===========================================
+           CHART.JS INITIALIZATION
+           =========================================== */
+      function initChartsForSlide(index) {
+        var slide = slides[index];
+        var slideNum = parseInt(slide.getAttribute("data-slide"));
+
+        if (slideNum === 11) {
+          initTokenChart();
+        }
+        if (slideNum === 13) {
+          initScalingChart();
+        }
+      }
+
+      function initTokenChart() {
+        var canvas = document.getElementById("tokenChart");
+        if (!canvas || Chart.getChart(canvas)) return;
+
+        new Chart(canvas, {
+          type: "bar",
+          data: {
+            labels: [
+              "Direct\n(289 tools)",
+              "Proxy\nStartup",
+              "After\nSearch",
+              "After Search\n+ Schema",
+            ],
+            datasets: [
+              {
+                label: "Tokens",
+                data: [160143, 456, 505, 2119],
+                backgroundColor: [
+                  "rgba(220, 38, 38, 0.2)",
+                  "rgba(5, 150, 105, 0.2)",
+                  "rgba(5, 150, 105, 0.15)",
+                  "rgba(5, 150, 105, 0.1)",
+                ],
+                borderColor: ["#DC2626", "#059669", "#059669", "#059669"],
+                borderWidth: 2,
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 800, easing: "easeOutQuart" },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.parsed.y.toLocaleString() + " tokens";
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: "#6B5E53",
+                  font: { family: "'DM Sans', sans-serif", size: 13 },
+                },
+                grid: { display: false },
+              },
+              y: {
+                type: "logarithmic",
+                ticks: {
+                  color: "#9C8E82",
+                  font: { family: "'DM Sans', sans-serif", size: 13 },
+                  callback: function (v) {
+                    return v >= 1000 ? v / 1000 + "K" : v;
+                  },
+                },
+                grid: { color: "rgba(26, 22, 18, 0.06)" },
+              },
+            },
+          },
+        });
+      }
+
+      function initScalingChart() {
+        var canvas = document.getElementById("scalingChart");
+        if (!canvas || Chart.getChart(canvas)) return;
+
+        new Chart(canvas, {
+          type: "line",
+          data: {
+            labels: ["14", "30", "39", "50", "100", "200", "500"],
+            datasets: [
+              {
+                label: "Savings %",
+                data: [84.5, 93.6, 95.0, 96.3, 98.3, 99.1, 99.7],
+                borderColor: "#D97706",
+                backgroundColor: "rgba(217, 119, 6, 0.1)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointBackgroundColor: "#D97706",
+                pointBorderColor: "#FAF6F1",
+                pointBorderWidth: 2,
+                borderWidth: 2.5,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 800, easing: "easeOutQuart" },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    return ctx.parsed.y + "% savings";
+                  },
+                },
+              },
+              annotation: undefined,
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Number of tools",
+                  color: "#9C8E82",
+                  font: { family: "'DM Sans', sans-serif", size: 13 },
+                },
+                ticks: {
+                  color: "#6B5E53",
+                  font: { family: "'DM Sans', sans-serif", size: 13 },
+                },
+                grid: { display: false },
+              },
+              y: {
+                min: 80,
+                max: 100,
+                title: {
+                  display: true,
+                  text: "Token savings %",
+                  color: "#9C8E82",
+                  font: { family: "'DM Sans', sans-serif", size: 13 },
+                },
+                ticks: {
+                  color: "#9C8E82",
+                  font: { family: "'DM Sans', sans-serif", size: 13 },
+                  callback: function (v) {
+                    return v + "%";
+                  },
+                },
+                grid: { color: "rgba(26, 22, 18, 0.06)" },
+              },
+            },
+          },
+        });
+      }
+
+      /* Init charts for the starting slide if applicable */
+      setTimeout(function () {
+        initChartsForSlide(0);
+      }, 300);
+
+      /* ===========================================
+           QR CODE GENERATOR (minimal, self-contained)
+           =========================================== */
+      (function () {
+        function generateQR(canvasId, url, size) {
+          var canvas = document.getElementById(canvasId);
+          if (!canvas) return;
+          var img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = function () {
+            var ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          };
+          img.src =
+            "https://api.qrserver.com/v1/create-qr-code/?size=" +
+            size +
+            "x" +
+            size +
+            "&data=" +
+            encodeURIComponent(url) +
+            "&color=1A1612&bgcolor=FFFFFF";
+        }
+        generateQR("qrCanvas", "https://leanpub.com/adventures-with-llms", 160);
+        generateQR(
+          "qrPlayground",
+          "https://mcp-playground-frontend.ml.tfy-eo.truefoundry.cloud/",
+          130,
+        );
+      })();
+    </script>
+  </body>
+</html>

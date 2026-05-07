@@ -27,7 +27,7 @@ Five experiments validating that mcp-guardian's progressive discovery proxy deli
 | Proxy after search | 505 | 99.7% |
 | Proxy after search + get_schema | 2,119 | 98.7% |
 
-At Claude Opus 4.6 pricing ($5/M input tokens), that's **$291/yr saved** at 1,000 sessions/day.
+Schemas are resent every turn — in a 10-turn conversation, that's **$29K/yr saved** at 10K conversations/day, or **$292K/yr** at 100K/day (Claude Opus 4.6, $5/M input).
 
 [Full details](experiment-1-token-cost/summary.md)
 

@@ -38,9 +38,19 @@ Even after a full search-then-drill-down workflow (search + get_schema for one t
 
 ## Why It Matters
 
-At Claude Opus 4.6 input pricing ($5.00 / 1M tokens):
+Tool schemas are resent on **every turn** of a conversation. In a 10-turn conversation, you pay for those 160K tokens 10 times.
 
-| Mode | Cost per session | Annual cost (1000 sessions/day) |
+At Claude Opus 4.6 input pricing ($5.00 / 1M tokens), 10-turn conversations:
+
+| Scale | Direct schema cost/yr | Proxy schema cost/yr | Savings/yr |
+|-------|---------------------:|--------------------:|-----------:|
+| 1K conversations/day | $2,923 | $8.3 | **$2,914** |
+| 10K conversations/day | $29,227 | $83 | **$29,144** |
+| 100K conversations/day | $292,270 | $832 | **$291,438** |
+
+Single-turn cost comparison (for reference):
+
+| Mode | Cost per session | Annual cost (1K sessions/day) |
 |------|----------------:|-----------:|
 | Direct | $0.000801 | $292.27 |
 | Proxy startup | $0.000002 | $0.83 |

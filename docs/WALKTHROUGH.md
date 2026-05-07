@@ -441,6 +441,52 @@ my-server:
 
 `fastmcp` will discover `authorization_url` and `token_url` from `/.well-known/oauth-authorization-server` at the server URL, then run the browser-based OAuth flow using your `client_id`. No need to specify auth/token URLs manually.
 
+**Q: What is FastMCP Code Mode and how does it compare to mcp-guardian?**
+A: FastMCP Code Mode is a feature in the FastMCP Python framework where the **server author** writes code to control tool visibility. Instead of exposing all tools at once, the server defines tool groups or lazy-loading logic.
+
+Example — a server using Code Mode to group tools:
+```python
+from fastmcp import FastMCP
+
+mcp = FastMCP("my-server")
+
+# Tools are tagged with categories
+@mcp.tool(tags=["read"])
+def list_tables():
+    """List all tables in the database."""
+    ...
+
+@mcp.tool(tags=["write"])
+def drop_table(name: str):
+    """Drop a table. Dangerous!"""
+    ...
+
+@mcp.tool(tags=["discovery"])
+def search_tools(query: str):
+    """Search available tools by keyword."""
+    # Server author manually implements search logic
+    matching = [t for t in mcp.tools if query.lower() in t.name.lower()]
+    return [{"name": t.name, "description": t.description} for t in matching]
+```
+
+The key differences:
+
+| Aspect | FastMCP Code Mode | mcp-guardian proxy |
+|---|---|---|
+| **Who changes code?** | Server author must rewrite the server | Nobody — works with unmodified servers |
+| **Works with 3rd-party servers?** | No — you can't modify PostgreSQL MCP or GitHub MCP | Yes — any MCP-compliant server |
+| **Tool scoping** | Server defines groups in Python | YAML config, no code |
+| **Search** | Server author implements search logic | Built-in pluggable search (keyword, semantic) |
+| **Auth handling** | Server author implements | Declarative in scope.yaml (5 auth types) |
+| **Audit logging** | Server author implements | Built-in JSONL audit log |
+| **Multi-server** | One server at a time | Aggregate tools from N servers under one proxy |
+
+**When Code Mode makes sense:** You're building your own MCP server from scratch and want built-in progressive discovery. You control the code and can add tags/groups.
+
+**When mcp-guardian makes sense:** You're consuming existing MCP servers (PostgreSQL, GitHub, Slack, etc.) and want progressive discovery, scoping, and auth without modifying any of them. Or you're aggregating multiple servers into a single proxy.
+
+In practice, the two can even work together — a server could use Code Mode internally, and you still put mcp-guardian in front for cross-server scoping, auth, and audit.
+
 **Q: How does the Chat Demo work?**
 A: The Chat Demo tab uses an LLM (configurable via `GUARDIAN_LLM_*` env vars) with OpenAI function calling. The LLM is given the same 3 meta-tools (`search_tools`, `get_schema`, `execute_tool`) and a system prompt that enforces the search → schema → execute pattern. Each turn runs an agentic loop (up to 6 iterations) where the LLM picks tools, `ChatAgent` executes them against the proxy's index and upstream servers, and results stream back to the browser via SSE. The sidebar tracks cumulative token costs — tool schema tokens, LLM input/output tokens, and the difference between using the proxy vs exposing all tools directly. If a tool fails twice, the agent stops retrying and asks the LLM to summarize with whatever data it has.
 
