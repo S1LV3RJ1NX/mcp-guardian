@@ -34,6 +34,9 @@ dev = [
     "ruff>=0.8.0",
     "coverage>=7.0",
     "pre-commit>=4.6.0",
+    "playwright>=1.60.0",
+    "pypdf>=6.13.2",
+    "pillow>=12.2.0",
 ]
 
 [project.scripts]
