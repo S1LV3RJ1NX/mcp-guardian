@@ -171,29 +171,72 @@
           padding-top: clamp(1.5rem, 5vw, 2.5rem);
           overflow-y: auto;
         }
-        .slide-nav { display: none; }
-        .context-bar { max-width: 100%; }
-        .data-table { font-size: var(--small-size); }
-        .data-table th, .data-table td { padding: 0.3rem 0.4rem; }
-        .code-block { font-size: clamp(0.55rem, 2.2vw, 0.75rem); padding: 0.6rem; overflow-x: auto; }
-        .chart-container { max-height: min(35vh, 280px); }
-        .big-stat { font-size: clamp(2.5rem, 15vw, 5rem) !important; }
-        .demo-slide h1 { font-size: clamp(2rem, 12vw, 4rem) !important; }
-        .arch-arrow { font-size: clamp(1rem, 5vw, 1.5rem); }
-        .flow-step { flex-direction: column; }
-        .flow-num { min-width: auto; }
-        .scope-card ul { font-size: var(--small-size); }
-        .auth-pill { padding: 0.4rem; }
-        .auth-pill .auth-name { font-size: clamp(0.65rem, 2.5vw, 0.85rem); }
+        .slide-nav {
+          display: none;
+        }
+        .context-bar {
+          max-width: 100%;
+        }
+        .data-table {
+          font-size: var(--small-size);
+        }
+        .data-table th,
+        .data-table td {
+          padding: 0.3rem 0.4rem;
+        }
+        .code-block {
+          font-size: clamp(0.55rem, 2.2vw, 0.75rem);
+          padding: 0.6rem;
+          overflow-x: auto;
+        }
+        .chart-container {
+          max-height: min(35vh, 280px);
+        }
+        .big-stat {
+          font-size: clamp(2.5rem, 15vw, 5rem) !important;
+        }
+        .demo-slide h1 {
+          font-size: clamp(2rem, 12vw, 4rem) !important;
+        }
+        .arch-arrow {
+          font-size: clamp(1rem, 5vw, 1.5rem);
+        }
+        .flow-step {
+          flex-direction: column;
+        }
+        .flow-num {
+          min-width: auto;
+        }
+        .scope-card ul {
+          font-size: var(--small-size);
+        }
+        .auth-pill {
+          padding: 0.4rem;
+        }
+        .auth-pill .auth-name {
+          font-size: clamp(0.65rem, 2.5vw, 0.85rem);
+        }
         [style*="grid-template-columns: 1fr auto 2fr auto 1fr"] {
           grid-template-columns: 1fr !important;
           gap: 0.5rem !important;
         }
-        .arch-arrow { transform: rotate(90deg); }
-        .approach-card .label { font-size: clamp(0.75rem, 3vw, 1rem) !important; }
-        .approach-card .who { font-size: clamp(0.7rem, 2.8vw, 0.9rem) !important; }
-        #qrCanvas { width: 120px !important; height: 120px !important; }
-        #qrPlayground { width: 100px !important; height: 100px !important; }
+        .arch-arrow {
+          transform: rotate(90deg);
+        }
+        .approach-card .label {
+          font-size: clamp(0.75rem, 3vw, 1rem) !important;
+        }
+        .approach-card .who {
+          font-size: clamp(0.7rem, 2.8vw, 0.9rem) !important;
+        }
+        #qrCanvas {
+          width: 120px !important;
+          height: 120px !important;
+        }
+        #qrPlayground {
+          width: 100px !important;
+          height: 100px !important;
+        }
       }
       @media (prefers-reduced-motion: reduce) {
         *,
@@ -1037,17 +1080,44 @@
             <div class="sketch-card approach-card">
               <div class="label">Spec Recommendation</div>
               <div class="who">Every client must implement it</div>
-              <div style="font-size: clamp(0.7rem, 1vw, 0.9rem); color: var(--text-secondary); margin-top: 0.3rem; font-style: italic;">Client-side pagination &amp; filtering</div>
+              <div
+                style="
+                  font-size: clamp(0.7rem, 1vw, 0.9rem);
+                  color: var(--text-secondary);
+                  margin-top: 0.3rem;
+                  font-style: italic;
+                "
+              >
+                Client-side pagination &amp; filtering
+              </div>
             </div>
             <div class="sketch-card approach-card">
               <div class="label">FastMCP Code Mode</div>
               <div class="who">Every server must opt in</div>
-              <div style="font-size: clamp(0.7rem, 1vw, 0.9rem); color: var(--text-secondary); margin-top: 0.3rem; font-style: italic;">Server groups tools in code</div>
+              <div
+                style="
+                  font-size: clamp(0.7rem, 1vw, 0.9rem);
+                  color: var(--text-secondary);
+                  margin-top: 0.3rem;
+                  font-style: italic;
+                "
+              >
+                Server groups tools in code
+              </div>
             </div>
             <div class="sketch-card approach-card winner">
               <div class="label">Proxy (mcp-guardian)</div>
               <div class="who">Nobody changes anything</div>
-              <div style="font-size: clamp(0.7rem, 1vw, 0.9rem); color: var(--text-secondary); margin-top: 0.3rem; font-style: italic;">Transparent layer in between</div>
+              <div
+                style="
+                  font-size: clamp(0.7rem, 1vw, 0.9rem);
+                  color: var(--text-secondary);
+                  margin-top: 0.3rem;
+                  font-style: italic;
+                "
+              >
+                Transparent layer in between
+              </div>
             </div>
           </div>
           <p
@@ -1944,7 +2014,7 @@
           <div class="reveal" style="max-width: 600px; margin: 0 auto">
             <pre
               class="code-block"
-            ><span class="string">git clone</span> github.com/prathamesh-saraf/mcp-guardian
+            ><span class="string">git clone</span> github.com/S1LV3RJ1NX/mcp-guardian
 <span class="string">cd</span> mcp-guardian
 <span class="string">uv sync</span> --dev
 <span class="string">cp</span> examples/scope.direct.yaml scope.yaml
@@ -1973,7 +2043,7 @@
             "title": "Open Source",
             "script": "mcp-guardian is open source, MIT licensed, built with Python and FastMCP. Five commands to get running. Docker-ready for production. The scope.yaml examples in the repo cover PostgreSQL, GitHub, and Trends MCP out of the box.",
             "notes": [
-              "GitHub: prathamesh-saraf/mcp-guardian",
+              "GitHub: S1LV3RJ1NX/mcp-guardian",
               "MIT license",
               "5 commands to get running",
               "Docker support included"
@@ -2158,7 +2228,7 @@
                   margin-top: clamp(0.3rem, 0.5vw, 0.5rem);
                 "
               >
-                github.com/prathamesh-saraf/mcp-guardian
+                github.com/S1LV3RJ1NX/mcp-guardian
               </p>
             </div>
           </div>
