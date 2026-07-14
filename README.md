@@ -2,7 +2,7 @@
 
 > Talk: **"Putting MCP on a Diet: A Proxy for Tool Scoping and Context Compression"** at [MCP Dev Summit Bengaluru](https://events.linuxfoundation.org/mcp-dev-summit-bengaluru/) · 9-10 June 2026
 
-MCP proxy that sits between your AI client and upstream MCP servers, replacing hundreds of tool schemas with three meta-tools (`search_tools`, `get_schema`, `execute_tool`). This implements the [MCP spec's progressive discovery recommendation](https://modelcontextprotocol.io/docs/develop/clients/client-best-practices) at the infrastructure layer — no client changes needed.
+A transparent MCP proxy for progressive tool discovery and tool scoping — the tool-exposure layer of your agent harness. It sits between your AI client and upstream MCP servers, replacing hundreds of tool schemas with three meta-tools (`search_tools`, `get_schema`, `execute_tool`). This implements the [MCP spec's progressive discovery recommendation](https://modelcontextprotocol.io/docs/develop/clients/client-best-practices) at the infrastructure layer — no client changes needed.
 
 ## Why
 
